@@ -58,11 +58,7 @@ The Study app enables college students to:
 
 If you have ideas or want to help build this project, please open an issue or submit a pull request!
 
-## License
 
-MIT License
-
----
 *This project is in early development. Feedback and suggestions are welcome!*
 */
 gt 
