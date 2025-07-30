@@ -21,9 +21,22 @@ const groupSchema = new mongoose.Schema({
     type: Number,
     default: 10,
     min: 1,
-    max: 50
+    max: 100
+  },
+  privacy: {
+    type: String,
+    enum: ['public', 'private'],
+    default: 'public'
+  },
+  owner: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
   },
   members: [{
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User'
+    },
     name: String,
     email: String,
     joinedAt: {
@@ -31,11 +44,44 @@ const groupSchema = new mongoose.Schema({
       default: Date.now
     }
   }],
+  pendingMembers: [{
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User'
+    },
+    name: String,
+    email: String,
+    requestedAt: {
+      type: Date,
+      default: Date.now
+    }
+  }],
+  waitlist: [{
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User'
+    },
+    name: String,
+    email: String,
+    joinedAt: {
+      type: Date,
+      default: Date.now
+    }
+  }],
+  favorites: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
   mode: {
     type: String,
     enum: ['quiet', 'collaborative'],
     default: 'collaborative'
   },
+  // Meeting details
+  meetingType: { type: String, enum: ['in-person', 'online', 'hybrid'], default: 'in-person' },
+  meetingDate: { type: Date },
+  meetingTime: { type: String },
+  meetingLocation: { type: String },
+  meetingRoom: { type: String },
+  meetingUrl: { type: String },
+  meetingDuration: { type: Number, default: 60 }, // in minutes
   sessions: [{
     date: Date,
     location: String,
