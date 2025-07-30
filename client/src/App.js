@@ -2,6 +2,65 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import './App.css';
 
+// Advanced TimePicker Component with separate hour/minute scrolls
+function AdvancedTimePicker({ value, onChange, placeholder = "Select time" }) {
+  const handleTimeChange = (e) => {
+    // Create a synthetic event with the name property
+    const syntheticEvent = {
+      target: {
+        name: 'meetingTime',
+        value: e.target.value
+      }
+    };
+    onChange(syntheticEvent);
+  };
+
+  const displayValue = value ? (() => {
+    const [hours, minutes] = value.split(':');
+    const hour = parseInt(hours);
+    const period = hour >= 12 ? 'PM' : 'AM';
+    const displayHour = hour > 12 ? hour - 12 : hour === 0 ? 12 : hour;
+    return `${displayHour}:${minutes} ${period}`;
+  })() : '';
+
+  return (
+    <div className="time-input-container">
+      <input
+        type="time"
+        value={value}
+        onChange={handleTimeChange}
+        placeholder={placeholder}
+        className="time-input"
+      />
+      {value && (
+        <div className="time-display">
+          {displayValue}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Advanced DatePicker Component
+function AdvancedDatePicker({ value, onChange, placeholder = "Select date" }) {
+  const handleDateChange = (e) => {
+    onChange({ target: { name: 'meetingDate', value: e.target.value } });
+  };
+
+  return (
+    <div className="date-picker-container">
+      <input
+        type="date"
+        className="date-picker-input"
+        value={value || ''}
+        onChange={handleDateChange}
+        placeholder={placeholder}
+        min={new Date().toISOString().split('T')[0]} // Set minimum date to today
+      />
+    </div>
+  );
+}
+
 function App() {
   const [groups, setGroups] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -13,16 +72,13 @@ function App() {
   const [notification, setNotification] = useState('');
   const [editingGroup, setEditingGroup] = useState(null);
 
-  // Fetch groups from API
-  useEffect(() => {
-    fetchGroups();
-  }, []);
 
-  const fetchGroups = async () => {
+
+  const fetchGroups = async (currentUser = user) => {
     try {
       setLoading(true);
-      if (user) {
-        const response = await axios.get(`http://localhost:3001/api/groups/user/${user._id}`);
+      if (currentUser) {
+        const response = await axios.get(`http://localhost:3001/api/groups/user/${currentUser._id}`);
         console.log('Fetched groups with user status:', response.data); // Added debug log
         console.log('First group userStatus example:', response.data[0]?.userStatus); // Debug first group
         setGroups(response.data);
@@ -45,7 +101,7 @@ function App() {
       });
       
       // Refetch groups to get updated user status
-      await fetchGroups();
+      await fetchGroups(user);
       
       showNotification(response.data.message);
     } catch (error) {
@@ -69,11 +125,28 @@ function App() {
         ownerEmail: user.email
       };
       const response = await axios.post('http://localhost:3001/api/groups', groupWithOwner);
-      setGroups([response.data, ...groups]);
+      
+      // The POST route doesn't save meeting data properly, so update it immediately
+      const createdGroup = response.data;
+      console.log('Group created, now updating with meeting data:', createdGroup._id);
+      
+      // Update the group with meeting data using PUT route (which works)
+      const updateResponse = await axios.put(`http://localhost:3001/api/groups/${createdGroup._id}`, {
+        meetingDate: groupData.meetingDate,
+        meetingTime: groupData.meetingTime,
+        meetingLocation: groupData.meetingLocation,
+        meetingRoom: groupData.meetingRoom,
+        meetingUrl: groupData.meetingUrl,
+        meetingDuration: groupData.meetingDuration
+      });
+      
+      // Use the updated group data
+      setGroups([updateResponse.data, ...groups]);
       setActiveTab('list');
       showNotification('Group created successfully!');
     } catch (error) {
       console.error('Error creating group:', error);
+      showNotification('Failed to create group');
     }
   };
 
@@ -238,14 +311,15 @@ function App() {
   useEffect(() => {
     const savedUser = localStorage.getItem('user');
     if (savedUser) {
-      setUser(JSON.parse(savedUser));
+      const parsedUser = JSON.parse(savedUser);
+      setUser(parsedUser);
     }
   }, []);
 
   // Fetch groups when user changes
   useEffect(() => {
     if (user) {
-      fetchGroups();
+      fetchGroups(user);
     }
   }, [user]);
 
@@ -264,6 +338,7 @@ function App() {
           group={editingGroup} 
           onSubmit={updateGroup} 
           onClose={() => setEditingGroup(null)} 
+          showNotification={showNotification}
         />
       )}
       <header className="App-header">
@@ -296,6 +371,7 @@ function App() {
             >
               Favorites
             </button>
+
             <button 
               onClick={() => setActiveTab('create')} 
               className={activeTab === 'create' ? 'active' : ''}
@@ -426,8 +502,10 @@ function App() {
             )}
             
             {activeTab === 'create' && (
-              <CreateGroupForm onSubmit={createGroup} />
+              <CreateGroupForm onSubmit={createGroup} showNotification={showNotification} />
             )}
+            
+
               </>
             )}
           </>
@@ -533,7 +611,22 @@ function AuthForm({ mode, onLogin, onRegister, onSwitchMode, onClose, error }) {
 }
 
 // Create Group Form Component
-function CreateGroupForm({ onSubmit }) {
+function CreateGroupForm({ onSubmit, showNotification }) {
+  // Get current date and time for suggestions
+  const getCurrentDate = () => {
+    const today = new Date();
+    return today.toISOString().split('T')[0];
+  };
+
+  const getCurrentTime = () => {
+    const now = new Date();
+    const hours = now.getHours();
+    const minutes = now.getMinutes();
+    // Round to nearest 30 minutes
+    const roundedMinutes = Math.round(minutes / 30) * 30;
+    return `${hours.toString().padStart(2, '0')}:${roundedMinutes.toString().padStart(2, '0')}`;
+  };
+
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -542,8 +635,8 @@ function CreateGroupForm({ onSubmit }) {
     mode: 'collaborative',
     privacy: 'public',
     meetingType: 'in-person',
-    meetingDate: '',
-    meetingTime: '',
+    meetingDate: getCurrentDate(),
+    meetingTime: getCurrentTime(),
     meetingLocation: '',
     meetingRoom: '',
     meetingUrl: '',
@@ -552,6 +645,67 @@ function CreateGroupForm({ onSubmit }) {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    
+    // Comprehensive validation - ALL fields must be filled
+    if (!formData.name.trim()) {
+      showNotification('Please enter a group name');
+      return;
+    }
+    if (!formData.topic.trim()) {
+      showNotification('Please enter a topic');
+      return;
+    }
+    if (!formData.description.trim()) {
+      showNotification('Please enter a description');
+      return;
+    }
+    if (!formData.capacity || formData.capacity < 2) {
+      showNotification('Please enter a valid capacity (minimum 2)');
+      return;
+    }
+    if (!formData.meetingType) {
+      showNotification('Please select a meeting type');
+      return;
+    }
+    if (!formData.meetingDate) {
+      showNotification('Please select a meeting date');
+      return;
+    }
+    if (!formData.meetingTime) {
+      showNotification('Please select a meeting time');
+      return;
+    }
+    if (!formData.meetingDuration || formData.meetingDuration < 15) {
+      showNotification('Please enter a valid meeting duration (minimum 15 minutes)');
+      return;
+    }
+    
+    // Validate in-person meeting fields
+    if (formData.meetingType === 'in-person') {
+      if (!formData.meetingLocation.trim()) {
+        showNotification('Please enter a meeting location');
+        return;
+      }
+      if (!formData.meetingRoom.trim()) {
+        showNotification('Please enter a room number');
+        return;
+      }
+    }
+    
+    // Validate online/hybrid meeting fields
+    if (formData.meetingType === 'online' || formData.meetingType === 'hybrid') {
+      if (!formData.meetingUrl.trim()) {
+        showNotification('Please enter a meeting URL');
+        return;
+      }
+      // Basic URL validation
+      if (!formData.meetingUrl.startsWith('http://') && !formData.meetingUrl.startsWith('https://')) {
+        showNotification('Please enter a valid meeting URL (must start with http:// or https://)');
+        return;
+      }
+    }
+    
+    // If we get here, all validation passed
     onSubmit(formData);
     setFormData({
       name: '',
@@ -561,8 +715,8 @@ function CreateGroupForm({ onSubmit }) {
       mode: 'collaborative',
       privacy: 'public',
       meetingType: 'in-person',
-      meetingDate: '',
-      meetingTime: '',
+      meetingDate: getCurrentDate(),
+      meetingTime: getCurrentTime(),
       meetingLocation: '',
       meetingRoom: '',
       meetingUrl: '',
@@ -617,120 +771,129 @@ function CreateGroupForm({ onSubmit }) {
             name="capacity"
             value={formData.capacity}
             onChange={handleChange}
-            min="1"
+            min="2"
             max="100"
+            required
           />
         </div>
         <div>
           <label>Mode:</label>
-          <select name="mode" value={formData.mode} onChange={handleChange}>
+          <select name="mode" value={formData.mode} onChange={handleChange} required>
             <option value="collaborative">Collaborative</option>
             <option value="quiet">Quiet Study</option>
           </select>
         </div>
         <div>
           <label>Privacy:</label>
-          <select name="privacy" value={formData.privacy} onChange={handleChange}>
+          <select name="privacy" value={formData.privacy} onChange={handleChange} required>
             <option value="public">Public - Anyone can join</option>
             <option value="private">Private - Approval required</option>
           </select>
         </div>
         
-        {/* Meeting Details Section */}
-        <div className="meeting-details">
-          <h3>Meeting Details</h3>
-          <div>
-            <label>Meeting Type:</label>
-            <select name="meetingType" value={formData.meetingType} onChange={handleChange}>
-              <option value="in-person">In-Person</option>
-              <option value="online">Online (Zoom/Teams)</option>
-              <option value="hybrid">Hybrid</option>
-            </select>
-          </div>
-          <div>
-            <label>Meeting Date:</label>
-            <input
-              type="date"
-              name="meetingDate"
-              value={formData.meetingDate}
-              onChange={handleChange}
-            />
-          </div>
-          <div>
-            <label>Meeting Time:</label>
-            <input
-              type="time"
-              name="meetingTime"
-              value={formData.meetingTime}
-              onChange={handleChange}
-            />
-          </div>
-          <div>
-            <label>Meeting Duration (minutes):</label>
-            <input
-              type="number"
-              name="meetingDuration"
-              value={formData.meetingDuration}
-              onChange={handleChange}
-              min="15"
-              max="240"
-            />
-          </div>
-          
-          {formData.meetingType === 'in-person' && (
-            <>
-              <div>
-                <label>Location (Building/Campus):</label>
-                <input
-                  type="text"
-                  name="meetingLocation"
-                  value={formData.meetingLocation}
-                  onChange={handleChange}
-                  placeholder="e.g., Baker Library, Dartmouth College"
-                />
-              </div>
-              <div>
-                <label>Room Number:</label>
-                <input
-                  type="text"
-                  name="meetingRoom"
-                  value={formData.meetingRoom}
-                  onChange={handleChange}
-                  placeholder="e.g., Room 101, Study Room A"
-                />
-              </div>
-            </>
-          )}
-          
-          {(formData.meetingType === 'online' || formData.meetingType === 'hybrid') && (
+        <div>
+          <label>Meeting Type:</label>
+          <select name="meetingType" value={formData.meetingType} onChange={handleChange} required>
+            <option value="in-person">In-Person</option>
+            <option value="online">Online (Zoom/Teams)</option>
+            <option value="hybrid">Hybrid</option>
+          </select>
+        </div>
+        <div>
+          <label>Meeting Date:</label>
+          <AdvancedDatePicker
+            value={formData.meetingDate}
+            onChange={handleChange}
+            placeholder="Select date"
+            required
+          />
+        </div>
+        <div>
+          <label>Meeting Time:</label>
+          <AdvancedTimePicker
+            value={formData.meetingTime}
+            onChange={handleChange}
+            placeholder="Select time"
+            required
+          />
+        </div>
+        <div>
+          <label>Meeting Duration (minutes):</label>
+          <input
+            type="number"
+            name="meetingDuration"
+            value={formData.meetingDuration}
+            onChange={handleChange}
+            min="15"
+            max="240"
+            required
+          />
+        </div>
+        
+        {formData.meetingType === 'in-person' && (
+          <>
             <div>
-              <label>Meeting URL (Zoom/Teams):</label>
+              <label>Location (Building/Campus):</label>
               <input
-                type="url"
-                name="meetingUrl"
-                value={formData.meetingUrl}
+                type="text"
+                name="meetingLocation"
+                value={formData.meetingLocation}
                 onChange={handleChange}
-                placeholder="https://zoom.us/j/123456789"
+                placeholder="e.g., Baker Library, Dartmouth College"
+                required
               />
             </div>
-          )}
-        </div>
+            
+            {/* Library Helper */}
+            <LibraryHelper />
+            
+            <div>
+              <label>Room Number:</label>
+              <input
+                type="text"
+                name="meetingRoom"
+                value={formData.meetingRoom}
+                onChange={handleChange}
+                placeholder="e.g., Room 101, Study Room A"
+                required
+              />
+            </div>
+          </>
+        )}
+        
+        {(formData.meetingType === 'online' || formData.meetingType === 'hybrid') && (
+          <div>
+            <label>Meeting URL (Zoom/Teams):</label>
+            <input
+              type="url"
+              name="meetingUrl"
+              value={formData.meetingUrl}
+              onChange={handleChange}
+              placeholder="https://zoom.us/j/123456789"
+              required
+            />
+          </div>
+        )}
         
         <button type="submit">Create Group</button>
       </form>
+      
     </div>
   );
 }
 
 // Group Card Component
 function GroupCard({ group, user, onJoinGroup, onApproveRequest, onDenyRequest, onLeaveGroup, onUpdateGroup, onDeleteGroup, setEditingGroup, onToggleFavorite }) {
-  const isOwner = group.userStatus?.isOwner;
-  const isMember = group.userStatus?.isMember;
-  const hasRequested = group.userStatus?.hasRequested;
-  const isWaitlisted = group.userStatus?.isWaitlisted;
-  const isFavorited = group.userStatus?.isFavorited;
+  const isOwner = Boolean(group.userStatus?.isOwner);
+  const isMember = Boolean(group.userStatus?.isMember);
+  const hasRequested = Boolean(group.userStatus?.hasRequested);
+  const isWaitlisted = Boolean(group.userStatus?.isWaitlisted);
+  const isFavorited = Boolean(group.userStatus?.isFavorited);
   const canJoin = !isMember && !hasRequested && !isOwner;
   const [showDetails, setShowDetails] = useState(false);
+  
+  // Debug logging for showDetails state
+  console.log('GroupCard render for', group.name, 'showDetails:', showDetails);
 
   // Debug logging
   console.log('GroupCard render:', {
@@ -764,14 +927,17 @@ function GroupCard({ group, user, onJoinGroup, onApproveRequest, onDenyRequest, 
         <p><strong>Topic:</strong> {group.topic}</p>
         <p><strong>Members:</strong> {group.members ? group.members.length : 0}/{group.capacity}</p>
         
-        {group.meetingDate && (
+        {/* Show meeting info if available, otherwise show message */}
+        {group.meetingDate && group.meetingTime && group.meetingType && 
+         group.meetingDate.trim() && group.meetingTime.trim() && group.meetingType.trim() ? (
           <div className="meeting-basic-info">
             <p><strong>Date:</strong> {new Date(group.meetingDate).toLocaleDateString()}</p>
             <p><strong>Time:</strong> {group.meetingTime}</p>
             <p><strong>Type:</strong> {group.meetingType === 'in-person' ? 'In-Person' : group.meetingType === 'online' ? 'Online' : 'Hybrid'}</p>
-            {group.meetingLocation && (
-              <p><strong>Location:</strong> {group.meetingLocation}</p>
-            )}
+          </div>
+        ) : (
+          <div className="meeting-basic-info">
+            <p><strong>Meeting Details:</strong> <span style={{color: '#e74c3c', fontStyle: 'italic'}}>Not set</span></p>
           </div>
         )}
       </div>
@@ -780,28 +946,58 @@ function GroupCard({ group, user, onJoinGroup, onApproveRequest, onDenyRequest, 
       {showDetails && (
         <div className="details-popup-overlay" onClick={() => setShowDetails(false)}>
           <div className="details-popup" onClick={(e) => e.stopPropagation()}>
-            <h4>Group Details</h4>
+            <h4>Group Details - {group.name}</h4>
             <div className="popup-content">
               <p><strong>Description:</strong> {group.description}</p>
               <p><strong>Mode:</strong> {group.mode}</p>
               <p><strong>Privacy:</strong> {group.privacy}</p>
-              <p><strong>Duration:</strong> {group.meetingDuration} minutes</p>
+              <p><strong>Duration:</strong> {group.meetingDuration || 'Not set'} minutes</p>
               
-              {/* Show room/URL only for members */}
-              {(isMember || isOwner) && (
-                <>
-                  {group.meetingRoom && (
-                    <p><strong>Room:</strong> {group.meetingRoom}</p>
-                  )}
-                  {group.meetingUrl && (
-                    <p><strong>Meeting URL:</strong> 
-                      <a href={group.meetingUrl} target="_blank" rel="noopener noreferrer" className="meeting-link">
-                        Join Meeting
-                      </a>
-                    </p>
-                  )}
-                </>
-              )}
+              {/* Meeting Details Section */}
+              <div style={{marginTop: '15px', paddingTop: '15px', borderTop: '1px solid #eee'}}>
+                <h5 style={{marginBottom: '10px', color: '#2c3e50'}}>Meeting Details</h5>
+                
+                {group.meetingDate && group.meetingTime && group.meetingType && 
+                 group.meetingDate.trim() && group.meetingTime.trim() && group.meetingType.trim() ? (
+                  <>
+                    <p><strong>Date:</strong> {new Date(group.meetingDate).toLocaleDateString()}</p>
+                    <p><strong>Time:</strong> {group.meetingTime}</p>
+                    <p><strong>Type:</strong> {group.meetingType === 'in-person' ? 'In-Person' : group.meetingType === 'online' ? 'Online' : 'Hybrid'}</p>
+                    
+                    {/* Show location for everyone */}
+                    {group.meetingLocation && (
+                      <p><strong>Location:</strong> {group.meetingLocation}</p>
+                    )}
+                    
+                    {/* Show room/URL only for members */}
+                    {(isMember || isOwner) && (
+                      <>
+                        {group.meetingRoom && (
+                          <p><strong>Room:</strong> {group.meetingRoom}</p>
+                        )}
+                        {group.meetingUrl && (
+                          <p><strong>Meeting URL:</strong> 
+                            <a href={group.meetingUrl} target="_blank" rel="noopener noreferrer" className="meeting-link">
+                              Join Meeting
+                            </a>
+                          </p>
+                        )}
+                      </>
+                    )}
+                    
+                    {/* Show message for non-members about room/URL */}
+                    {!(isMember || isOwner) && (group.meetingRoom || group.meetingUrl) && (
+                      <p className="member-only-notice">
+                        <em>Room details and meeting URL are only visible to group members.</em>
+                      </p>
+                    )}
+                  </>
+                ) : (
+                  <p style={{color: '#e74c3c', fontStyle: 'italic'}}>
+                    <strong>Meeting details not set.</strong> The group owner needs to add meeting information.
+                  </p>
+                )}
+              </div>
             </div>
             <button onClick={() => setShowDetails(false)} className="close-popup-btn">Close</button>
           </div>
@@ -836,7 +1032,10 @@ function GroupCard({ group, user, onJoinGroup, onApproveRequest, onDenyRequest, 
         )}
 
         {/* Show Details Button */}
-        <button onClick={() => setShowDetails(true)} className="show-details-btn">
+        <button onClick={() => {
+          console.log('Show Details clicked for group:', group.name);
+          setShowDetails(true);
+        }} className="show-details-btn">
           Show Details
         </button>
       </div>
@@ -873,12 +1072,13 @@ function GroupCard({ group, user, onJoinGroup, onApproveRequest, onDenyRequest, 
 }
 
 function GroupSummary({ group, user, onJoinGroup, onToggleFavorite }) {
-  const isOwner = group.userStatus?.isOwner;
-  const isMember = group.userStatus?.isMember;
-  const hasRequested = group.userStatus?.hasRequested;
-  const isWaitlisted = group.userStatus?.isWaitlisted;
-  const isFavorited = group.userStatus?.isFavorited;
+  const isOwner = Boolean(group.userStatus?.isOwner);
+  const isMember = Boolean(group.userStatus?.isMember);
+  const hasRequested = Boolean(group.userStatus?.hasRequested);
+  const isWaitlisted = Boolean(group.userStatus?.isWaitlisted);
+  const isFavorited = Boolean(group.userStatus?.isFavorited);
   const canJoin = !isMember && !hasRequested && !isOwner;
+  const [showDetails, setShowDetails] = useState(false);
 
   return (
     <div className="group-card">
@@ -894,62 +1094,130 @@ function GroupSummary({ group, user, onJoinGroup, onToggleFavorite }) {
           </button>
         )}
       </div>
-      <p><strong>Topic:</strong> {group.topic}</p>
-      <p><strong>Description:</strong> {group.description}</p>
-      <p><strong>Mode:</strong> {group.mode}</p>
-      <p><strong>Members:</strong> {group.members ? group.members.length : 0}/{group.capacity}</p>
-      {group.waitlist && group.waitlist.length > 0 && (
-        <p><strong>Waitlist:</strong> {group.waitlist.length} people</p>
-      )}
-      <p><strong>Privacy:</strong> <span className={`privacy-${group.privacy}`}>{group.privacy}</span></p>
       
-      {/* Basic Meeting Info (Always Visible) */}
-      {group.meetingDate && (
-        <div className="meeting-info-basic">
-          <h4>📅 Meeting Details</h4>
-          <p><strong>Type:</strong> {group.meetingType}</p>
-          <p><strong>Date:</strong> {new Date(group.meetingDate).toLocaleDateString()}</p>
-          <p><strong>Time:</strong> {group.meetingTime}</p>
-          <p><strong>Duration:</strong> {group.meetingDuration} minutes</p>
-          
-          {/* Show location/room only for members or when details are expanded */}
-          {(isMember || isOwner) && group.meetingType === 'in-person' && group.meetingLocation && (
-            <p><strong>📍 Location:</strong> {group.meetingLocation}</p>
-          )}
-          
-          {(isMember || isOwner) && group.meetingType === 'in-person' && group.meetingRoom && (
-            <p><strong>🏢 Room:</strong> {group.meetingRoom}</p>
-          )}
-          
-          {/* Show meeting URL only for members or when details are expanded */}
-          {(isMember || isOwner) && (group.meetingType === 'online' || group.meetingType === 'hybrid') && group.meetingUrl && (
-            <p><strong>🔗 Meeting URL:</strong> 
-              <a href={group.meetingUrl} target="_blank" rel="noopener noreferrer" className="meeting-link">
-                Join Meeting
-              </a>
-            </p>
-          )}
+      {/* Basic Info - Always Visible */}
+      <div className="group-basic-info">
+        <p><strong>Topic:</strong> {group.topic}</p>
+        <p><strong>Members:</strong> {group.members ? group.members.length : 0}/{group.capacity}</p>
+        
+        {/* Show meeting info if available, otherwise show message */}
+        {group.meetingDate && group.meetingTime && group.meetingType && 
+         group.meetingDate.trim() && group.meetingTime.trim() && group.meetingType.trim() ? (
+          <div className="meeting-basic-info">
+            <p><strong>Date:</strong> {new Date(group.meetingDate).toLocaleDateString()}</p>
+            <p><strong>Time:</strong> {group.meetingTime}</p>
+            <p><strong>Type:</strong> {group.meetingType === 'in-person' ? 'In-Person' : group.meetingType === 'online' ? 'Online' : 'Hybrid'}</p>
+          </div>
+        ) : (
+          <div className="meeting-basic-info">
+            <p><strong>Meeting Details:</strong> <span style={{color: '#e74c3c', fontStyle: 'italic'}}>Not set</span></p>
+          </div>
+        )}
+      </div>
+
+      {/* Hidden Details Popup */}
+      {showDetails && (
+        <div className="details-popup-overlay" onClick={() => setShowDetails(false)}>
+          <div className="details-popup" onClick={(e) => e.stopPropagation()}>
+            <h4>Group Details - {group.name}</h4>
+            <div className="popup-content">
+              <p><strong>Description:</strong> {group.description}</p>
+              <p><strong>Mode:</strong> {group.mode}</p>
+              <p><strong>Privacy:</strong> {group.privacy}</p>
+              <p><strong>Duration:</strong> {group.meetingDuration || 'Not set'} minutes</p>
+              
+              {/* Meeting Details Section */}
+              <div style={{marginTop: '15px', paddingTop: '15px', borderTop: '1px solid #eee'}}>
+                <h5 style={{marginBottom: '10px', color: '#2c3e50'}}>Meeting Details</h5>
+                
+                {group.meetingDate && group.meetingTime && group.meetingType && 
+                 group.meetingDate.trim() && group.meetingTime.trim() && group.meetingType.trim() ? (
+                  <>
+                    <p><strong>Date:</strong> {new Date(group.meetingDate).toLocaleDateString()}</p>
+                    <p><strong>Time:</strong> {group.meetingTime}</p>
+                    <p><strong>Type:</strong> {group.meetingType === 'in-person' ? 'In-Person' : group.meetingType === 'online' ? 'Online' : 'Hybrid'}</p>
+                    
+                    {/* Show location for everyone */}
+                    {group.meetingLocation && (
+                      <p><strong>Location:</strong> {group.meetingLocation}</p>
+                    )}
+                    
+                    {/* Show room/URL only for members */}
+                    {(isMember || isOwner) && (
+                      <>
+                        {group.meetingRoom && (
+                          <p><strong>Room:</strong> {group.meetingRoom}</p>
+                        )}
+                        {group.meetingUrl && (
+                          <p><strong>Meeting URL:</strong> 
+                            <a href={group.meetingUrl} target="_blank" rel="noopener noreferrer" className="meeting-link">
+                              Join Meeting
+                            </a>
+                          </p>
+                        )}
+                      </>
+                    )}
+                    
+                    {/* Show message for non-members about room/URL */}
+                    {!(isMember || isOwner) && (group.meetingRoom || group.meetingUrl) && (
+                      <p className="member-only-notice">
+                        <em>Room details and meeting URL are only visible to group members.</em>
+                      </p>
+                    )}
+                  </>
+                ) : (
+                  <p style={{color: '#e74c3c', fontStyle: 'italic'}}>
+                    <strong>Meeting details not set.</strong> The group owner needs to add meeting information.
+                  </p>
+                )}
+              </div>
+            </div>
+            <button onClick={() => setShowDetails(false)} className="close-popup-btn">Close</button>
+          </div>
         </div>
       )}
-      
-      {canJoin && (
-        <button onClick={() => onJoinGroup(group._id)} className="join-btn">
-          {group.privacy === 'public' ? 'Join Group' : 'Request to Join'}
+
+      {/* Action Buttons */}
+      <div className="group-actions">
+        {canJoin && (
+          <button onClick={() => onJoinGroup(group._id)} className="join-btn">
+            {group.privacy === 'public' ? 'Join Group' : 'Request to Join'}
+          </button>
+        )}
+
+        {hasRequested && (
+          <span className="pending-status">Request Pending...</span>
+        )}
+
+        {isWaitlisted && (
+          <span className="waitlist-status">✓ Waitlisted</span>
+        )}
+
+        {/* Show Details Button */}
+        <button onClick={() => setShowDetails(true)} className="show-details-btn">
+          Show Details
         </button>
-      )}
-
-      {hasRequested && (
-        <span className="pending-status">Request Pending...</span>
-      )}
-
-      {isWaitlisted && (
-        <span className="waitlist-status">✓ Waitlisted</span>
-      )}
+      </div>
     </div>
   );
 }
 
-function EditGroupForm({ group, onSubmit, onClose }) {
+function EditGroupForm({ group, onSubmit, onClose, showNotification }) {
+  // Get current date and time for suggestions
+  const getCurrentDate = () => {
+    const today = new Date();
+    return today.toISOString().split('T')[0];
+  };
+
+  const getCurrentTime = () => {
+    const now = new Date();
+    const hours = now.getHours();
+    const minutes = now.getMinutes();
+    // Round to nearest 30 minutes
+    const roundedMinutes = Math.round(minutes / 30) * 30;
+    return `${hours.toString().padStart(2, '0')}:${roundedMinutes.toString().padStart(2, '0')}`;
+  };
+
   const [formData, setFormData] = useState({
     name: group.name,
     description: group.description,
@@ -958,8 +1226,8 @@ function EditGroupForm({ group, onSubmit, onClose }) {
     mode: group.mode,
     privacy: group.privacy,
     meetingType: group.meetingType || 'in-person',
-    meetingDate: group.meetingDate ? new Date(group.meetingDate).toISOString().split('T')[0] : '',
-    meetingTime: group.meetingTime || '',
+    meetingDate: group.meetingDate ? new Date(group.meetingDate).toISOString().split('T')[0] : getCurrentDate(),
+    meetingTime: group.meetingTime || getCurrentTime(),
     meetingLocation: group.meetingLocation || '',
     meetingRoom: group.meetingRoom || '',
     meetingUrl: group.meetingUrl || '',
@@ -968,6 +1236,67 @@ function EditGroupForm({ group, onSubmit, onClose }) {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    
+    // Comprehensive validation - ALL fields must be filled
+    if (!formData.name.trim()) {
+      showNotification('Please enter a group name');
+      return;
+    }
+    if (!formData.topic.trim()) {
+      showNotification('Please enter a topic');
+      return;
+    }
+    if (!formData.description.trim()) {
+      showNotification('Please enter a description');
+      return;
+    }
+    if (!formData.capacity || formData.capacity < 2) {
+      showNotification('Please enter a valid capacity (minimum 2)');
+      return;
+    }
+    if (!formData.meetingType) {
+      showNotification('Please select a meeting type');
+      return;
+    }
+    if (!formData.meetingDate) {
+      showNotification('Please select a meeting date');
+      return;
+    }
+    if (!formData.meetingTime) {
+      showNotification('Please select a meeting time');
+      return;
+    }
+    if (!formData.meetingDuration || formData.meetingDuration < 15) {
+      showNotification('Please enter a valid meeting duration (minimum 15 minutes)');
+      return;
+    }
+    
+    // Validate in-person meeting fields
+    if (formData.meetingType === 'in-person') {
+      if (!formData.meetingLocation.trim()) {
+        showNotification('Please enter a meeting location');
+        return;
+      }
+      if (!formData.meetingRoom.trim()) {
+        showNotification('Please enter a room number');
+        return;
+      }
+    }
+    
+    // Validate online/hybrid meeting fields
+    if (formData.meetingType === 'online' || formData.meetingType === 'hybrid') {
+      if (!formData.meetingUrl.trim()) {
+        showNotification('Please enter a meeting URL');
+        return;
+      }
+      // Basic URL validation
+      if (!formData.meetingUrl.startsWith('http://') && !formData.meetingUrl.startsWith('https://')) {
+        showNotification('Please enter a valid meeting URL (must start with http:// or https://)');
+        return;
+      }
+    }
+    
+    // If we get here, all validation passed
     onSubmit(group._id, formData);
     onClose();
   };
@@ -1021,102 +1350,107 @@ function EditGroupForm({ group, onSubmit, onClose }) {
             onChange={handleChange}
             min="1"
             max="100"
+            required
           />
         </div>
         <div>
           <label>Mode:</label>
-          <select name="mode" value={formData.mode} onChange={handleChange}>
+          <select name="mode" value={formData.mode} onChange={handleChange} required>
             <option value="collaborative">Collaborative</option>
             <option value="quiet">Quiet Study</option>
           </select>
         </div>
         <div>
           <label>Privacy:</label>
-          <select name="privacy" value={formData.privacy} onChange={handleChange}>
+          <select name="privacy" value={formData.privacy} onChange={handleChange} required>
             <option value="public">Public - Anyone can join</option>
             <option value="private">Private - Approval required</option>
           </select>
         </div>
         
-        {/* Meeting Details Section */}
-        <div className="meeting-details">
-          <h3>Meeting Details</h3>
-          <div>
-            <label>Meeting Type:</label>
-            <select name="meetingType" value={formData.meetingType} onChange={handleChange}>
-              <option value="in-person">In-Person</option>
-              <option value="online">Online (Zoom/Teams)</option>
-              <option value="hybrid">Hybrid</option>
-            </select>
-          </div>
-          <div>
-            <label>Meeting Date:</label>
-            <input
-              type="date"
-              name="meetingDate"
-              value={formData.meetingDate}
-              onChange={handleChange}
-            />
-          </div>
-          <div>
-            <label>Meeting Time:</label>
-            <input
-              type="time"
-              name="meetingTime"
-              value={formData.meetingTime}
-              onChange={handleChange}
-            />
-          </div>
-          <div>
-            <label>Meeting Duration (minutes):</label>
-            <input
-              type="number"
-              name="meetingDuration"
-              value={formData.meetingDuration}
-              onChange={handleChange}
-              min="15"
-              max="240"
-            />
-          </div>
-          
-          {formData.meetingType === 'in-person' && (
-            <>
-              <div>
-                <label>Location (Building/Campus):</label>
-                <input
-                  type="text"
-                  name="meetingLocation"
-                  value={formData.meetingLocation}
-                  onChange={handleChange}
-                  placeholder="e.g., Baker Library, Dartmouth College"
-                />
-              </div>
-              <div>
-                <label>Room Number:</label>
-                <input
-                  type="text"
-                  name="meetingRoom"
-                  value={formData.meetingRoom}
-                  onChange={handleChange}
-                  placeholder="e.g., Room 101, Study Room A"
-                />
-              </div>
-            </>
-          )}
-          
-          {(formData.meetingType === 'online' || formData.meetingType === 'hybrid') && (
+        <div>
+          <label>Meeting Type:</label>
+          <select name="meetingType" value={formData.meetingType} onChange={handleChange} required>
+            <option value="in-person">In-Person</option>
+            <option value="online">Online (Zoom/Teams)</option>
+            <option value="hybrid">Hybrid</option>
+          </select>
+        </div>
+        <div>
+          <label>Meeting Date:</label>
+          <AdvancedDatePicker
+            value={formData.meetingDate}
+            onChange={handleChange}
+            placeholder="Select date"
+            required
+          />
+        </div>
+        <div>
+          <label>Meeting Time:</label>
+          <AdvancedTimePicker
+            value={formData.meetingTime}
+            onChange={handleChange}
+            placeholder="Select time"
+            required
+          />
+        </div>
+        <div>
+          <label>Meeting Duration (minutes):</label>
+          <input
+            type="number"
+            name="meetingDuration"
+            value={formData.meetingDuration}
+            onChange={handleChange}
+            min="15"
+            max="240"
+            required
+          />
+        </div>
+        
+        {formData.meetingType === 'in-person' && (
+          <>
             <div>
-              <label>Meeting URL (Zoom/Teams):</label>
+              <label>Location (Building/Campus):</label>
               <input
-                type="url"
-                name="meetingUrl"
-                value={formData.meetingUrl}
+                type="text"
+                name="meetingLocation"
+                value={formData.meetingLocation}
                 onChange={handleChange}
-                placeholder="https://zoom.us/j/123456789"
+                placeholder="e.g., Baker Library, Dartmouth College"
+                required
               />
             </div>
-          )}
-        </div>
+            
+            {/* Library Helper */}
+            <LibraryHelper />
+            
+            <div>
+              <label>Room Number:</label>
+              <input
+                type="text"
+                name="meetingRoom"
+                value={formData.meetingRoom}
+                onChange={handleChange}
+                placeholder="e.g., Room 101, Study Room A"
+                required
+              />
+            </div>
+          </>
+        )}
+        
+        {(formData.meetingType === 'online' || formData.meetingType === 'hybrid') && (
+          <div>
+            <label>Meeting URL (Zoom/Teams):</label>
+            <input
+              type="url"
+              name="meetingUrl"
+              value={formData.meetingUrl}
+              onChange={handleChange}
+              placeholder="https://zoom.us/j/123456789"
+              required
+            />
+          </div>
+        )}
         
         <div className="form-actions">
           <button type="submit">Update Group</button>
@@ -1131,6 +1465,29 @@ function Notification({ message }) {
   return (
     <div className="notification-bar">
       {message}
+    </div>
+  );
+}
+
+
+
+// Library Helper Component
+function LibraryHelper() {
+  return (
+    <div className="library-helper">
+      <p className="helper-text">
+        Reserve a study room at Dartmouth Libraries for your group meeting.
+      </p>
+      <div className="helper-actions">
+        <a 
+          href="https://www.library.dartmouth.edu/visit/spaces" 
+          target="_blank" 
+          rel="noopener noreferrer"
+          className="library-link-btn"
+        >
+          Reserve a Room
+        </a>
+      </div>
     </div>
   );
 }

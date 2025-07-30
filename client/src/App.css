@@ -403,6 +403,8 @@ main {
   border: 1px solid #ddd;
   border-radius: 4px;
   font-size: 1rem;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .create-group textarea {
@@ -628,20 +630,7 @@ main {
   color: #e0a800 !important;
 }
 
-.meeting-details {
-  margin-top: 20px;
-  padding: 15px;
-  background: #f8f9fa;
-  border-radius: 8px;
-  border: 1px solid #e9ecef;
-}
 
-.meeting-details h3 {
-  margin-top: 0;
-  margin-bottom: 15px;
-  color: #333;
-  font-size: 1.1rem;
-}
 
 .meeting-info {
   margin-top: 15px;
@@ -769,6 +758,16 @@ main {
   line-height: 1.5;
 }
 
+.member-only-notice {
+  margin-top: 15px;
+  padding: 10px;
+  background: #fff3cd;
+  border: 1px solid #ffeaa7;
+  border-radius: 4px;
+  color: #856404;
+  font-size: 0.85rem;
+}
+
 .close-popup-btn {
   background: #6c757d;
   color: white;
@@ -800,7 +799,363 @@ main {
 
 .group-actions {
   display: flex;
-  flex-wrap: wrap;
   gap: 10px;
+  flex-wrap: wrap;
   margin-top: 15px;
+}
+
+/* Time Input Styles */
+.time-input-container {
+  position: relative;
+  width: 100%;
+}
+
+.time-input {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 1rem;
+  background: white;
+  box-sizing: border-box;
+}
+
+.time-input:focus {
+  outline: none;
+  border-color: #87CEEB;
+}
+
+.time-display {
+  margin-top: 5px;
+  font-size: 14px;
+  color: #666;
+  font-style: italic;
+}
+
+/* Date Picker Styles */
+.date-picker-container {
+  position: relative;
+  width: 100%;
+}
+
+.date-picker-input {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 1rem;
+  background: white;
+  box-sizing: border-box;
+}
+
+.date-picker-input:focus {
+  outline: none;
+  border-color: #3498db;
+  box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+}
+
+/* Quick Time Suggestions */
+.quick-time-suggestions {
+  margin-top: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.quick-time-btn {
+  padding: 6px 12px;
+  border: 1px solid #ddd;
+  border-radius: 20px;
+  background: white;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+
+.quick-time-btn:hover {
+  background-color: #f8f9fa;
+  border-color: #007bff;
+}
+
+.quick-time-btn.selected {
+  background-color: #007bff;
+  color: white;
+  border-color: #007bff;
+}
+
+/* Date Suggestions */
+.date-suggestions {
+  margin-top: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.date-suggestion-btn {
+  padding: 6px 12px;
+  border: 1px solid #ddd;
+  border-radius: 20px;
+  background: white;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+
+.date-suggestion-btn:hover {
+  background-color: #f8f9fa;
+  border-color: #007bff;
+}
+
+.date-suggestion-btn.selected {
+  background-color: #007bff;
+  color: white;
+  border-color: #007bff;
+}
+
+/* Current time indicator */
+.current-time-indicator {
+  font-size: 12px;
+  color: #666;
+  margin-top: 5px;
+  font-style: italic;
+}
+
+/* Time Picker Styles */
+.time-picker-container {
+  position: relative;
+  width: 100%;
+}
+
+.time-picker-input {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 16px;
+  cursor: pointer;
+  background: white;
+}
+
+.time-picker-input:focus {
+  outline: none;
+  border-color: #87CEEB;
+}
+
+.time-picker-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  z-index: 1000;
+  margin-top: 5px;
+  padding: 15px;
+}
+
+.time-picker-content {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.time-columns {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.time-column {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+}
+
+.time-column-label {
+  font-size: 12px;
+  color: #666;
+  font-weight: 500;
+}
+
+.time-scroll {
+  width: 60px;
+  height: 120px;
+  overflow-y: auto;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  background: #f8f9fa;
+  scrollbar-width: thin;
+  scrollbar-color: #c1c1c1 #f8f9fa;
+}
+
+.time-scroll::-webkit-scrollbar {
+  width: 4px;
+}
+
+.time-scroll::-webkit-scrollbar-track {
+  background: #f8f9fa;
+  border-radius: 2px;
+}
+
+.time-scroll::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 2px;
+}
+
+.time-scroll::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+.time-item {
+  padding: 8px 4px;
+  text-align: center;
+  cursor: pointer;
+  border-bottom: 1px solid #eee;
+  transition: all 0.2s;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.time-item:hover {
+  background-color: #e9ecef;
+}
+
+.time-item.selected {
+  background-color: #87CEEB;
+  color: white;
+  font-weight: 600;
+}
+
+.time-separator {
+  font-size: 20px;
+  font-weight: 300;
+  color: #666;
+  margin: 0 5px;
+}
+
+.period-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+}
+
+.period-btn {
+  padding: 8px 16px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  background: white;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s;
+  min-width: 50px;
+}
+
+.period-btn:hover {
+  background-color: #f8f9fa;
+  border-color: #87CEEB;
+}
+
+.period-btn.selected {
+  background-color: #87CEEB;
+  color: white;
+  border-color: #87CEEB;
+}
+
+.set-time-btn {
+  padding: 10px 20px;
+  border: 1px solid #87CEEB;
+  border-radius: 6px;
+  background: #87CEEB;
+  color: white;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s;
+  width: 100%;
+}
+
+.set-time-btn:hover {
+  background-color: #5bc0de;
+  border-color: #5bc0de;
+}
+
+/* Library Helper Styles */
+.library-helper {
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 6px;
+  padding: 12px 16px;
+  margin: 10px 0;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.helper-text {
+  color: #6c757d;
+  margin-bottom: 10px;
+  line-height: 1.4;
+  font-size: 0.9rem;
+}
+
+.helper-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.library-link-btn {
+  padding: 6px 12px;
+  border: none;
+  border-radius: 4px;
+  text-decoration: none;
+  font-weight: 500;
+  text-align: center;
+  transition: background-color 0.2s;
+  font-size: 0.85rem;
+  background: #3498db;
+  color: white;
+}
+
+.library-link-btn:hover {
+  background: #2980b9;
+}
+
+/* Responsive Design for Library Helper */
+@media (max-width: 768px) {
+  .helper-actions {
+    flex-direction: column;
+  }
+  
+  .library-link-btn {
+    width: 100%;
+  }
+}
+
+/* Required Field Indicators */
+.create-group label::after {
+  content: " *";
+  color: #e74c3c;
+  font-weight: bold;
+}
+
+.create-group label {
+  font-weight: bold;
+  color: #2c3e50;
+}
+
+/* Form validation styles */
+.create-group input:invalid,
+.create-group textarea:invalid,
+.create-group select:invalid {
+  border-color: #e74c3c;
+}
+
+.create-group input:focus:invalid,
+.create-group textarea:focus:invalid,
+.create-group select:focus:invalid {
+  box-shadow: 0 0 0 2px rgba(231, 76, 60, 0.2);
 }

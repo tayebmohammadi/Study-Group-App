@@ -76,11 +76,11 @@ const groupSchema = new mongoose.Schema({
   },
   // Meeting details
   meetingType: { type: String, enum: ['in-person', 'online', 'hybrid'], default: 'in-person' },
-  meetingDate: { type: Date },
+  meetingDate: { type: String },
   meetingTime: { type: String },
   meetingLocation: { type: String },
-  meetingRoom: { type: String },
-  meetingUrl: { type: String },
+  meetingRoom: { type: String, default: '' },
+  meetingUrl: { type: String, default: '' },
   meetingDuration: { type: Number, default: 60 }, // in minutes
   sessions: [{
     date: Date,
