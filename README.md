@@ -1,33 +1,33 @@
 # Study Group App - DALI Choose Your Own Adventure Challenge
 
-A full-stack web application for creating and managing study groups at Dartmouth College. Built with React.js frontend and Node.js/Express backend with MongoDB Atlas database.
+A web app for creating and managing study groups at Dartmouth College. Built with React.js frontend and Node.js/Express backend with MongoDB Atlas database.
 
-## 🚀 Features
+## Features
 
-### Core Functionality
-- **User Authentication**: Registration and login with secure password validation
+### Main Features
+- **User Accounts**: Register and login with password validation
 - **Group Management**: Create, edit, delete, and join study groups
-- **Smart Capacity System**: Automatic waitlist management when groups are full
-- **Ownership Transfer**: Automatic ownership transfer when group owners leave
-- **Favorites System**: Star and organize favorite groups
-- **Meeting Details**: Comprehensive meeting information (date, time, location, type)
-- **Privacy Controls**: Public and private group options
+- **Waitlist System**: Automatic waitlist when groups are full
+- **Ownership Transfer**: Automatic transfer when group owners leave
+- **Favorites**: Star and save favorite groups
+- **Meeting Details**: Date, time, location, and meeting type
+- **Privacy**: Public and private group options
 
-### Advanced Features
-- **Dynamic Notifications**: User-friendly disappearing notification system
-- **Tabbed Interface**: Separate views for "My Groups", "Available Groups", and "Favorites"
-- **Meeting Privacy**: Room numbers and URLs only visible to group members
-- **Dartmouth Library Integration**: Direct links to library room reservation
-- **Form Validation**: Comprehensive client-side validation for all required fields
-- **Responsive Design**: Modern, clean UI with professional styling
+### Extra Features
+- **Notifications**: Simple disappearing notification system
+- **Tabs**: Separate views for "My Groups", "Available Groups", and "Favorites"
+- **Meeting Privacy**: Room numbers and URLs only for group members
+- **Library Links**: Direct links to Dartmouth library room booking
+- **Form Validation**: Check all required fields before submitting
+- **Clean Design**: Simple, easy-to-use interface
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 ### Frontend
-- **React.js**: Modern UI framework
-- **Axios**: HTTP client for API communication
-- **CSS3**: Custom styling with modern design patterns
-- **Local Storage**: Client-side session persistence
+- **React.js**: UI framework
+- **Axios**: HTTP client for API calls
+- **CSS3**: Custom styling
+- **Local Storage**: Save user session
 
 ### Backend
 - **Node.js**: JavaScript runtime
@@ -55,28 +55,28 @@ DALI Project/
 └── README.md
 ```
 
-## 🚀 Getting Started
+## Getting Started
 
-### Prerequisites
+### What You Need
 - Node.js (v18 or higher)
 - npm (Node Package Manager)
 - MongoDB Atlas account
 
-### Installation
+### Setup
 
-1. **Clone the repository**
+1. **Get the code**
    ```bash
    git clone https://github.com/tayebmohammadi/Study-Group-App.git
    cd Study-Group-App
    ```
 
-2. **Install dependencies**
+2. **Install packages**
    ```bash
-   # Install backend dependencies
+   # Install backend packages
    cd server
    npm install
 
-   # Install frontend dependencies
+   # Install frontend packages
    cd ../client
    npm install
    ```
@@ -87,7 +87,7 @@ DALI Project/
    - Get your connection string
    - Replace the connection string in `server/index.js`
 
-4. **Start the application**
+4. **Run the app**
    ```bash
    # Start backend server (from server directory)
    cd server
@@ -142,20 +142,20 @@ I noticed that groups I created manually didn't display the same way as the test
 
 The most valuable lesson was learning to be patient and systematic when debugging. Every problem had a solution, and each challenge taught me something new about web development.
 
-## 🎯 Key Features Implemented
+## Key Features
 
-### Authentication & User Management
-- Secure user registration with password validation
+### User Accounts
+- Register and login with password validation
 - Login/logout functionality
-- Session persistence using localStorage
+- Save user session using localStorage
 
-### Group Management System
-- Create groups with comprehensive meeting details
-- Join/leave groups with capacity management
+### Group Management
+- Create groups with meeting details
+- Join/leave groups with capacity limits
 - Edit and delete group functionality
 - Public/private group options
 
-### Advanced Group Features
+### Group Features
 - Waitlist system for full groups
 - Automatic ownership transfer
 - Favorites system with star functionality
@@ -163,11 +163,11 @@ The most valuable lesson was learning to be patient and systematic when debuggin
 
 ### User Interface
 - Tabbed navigation (My Groups, Available Groups, Favorites)
-- Dynamic notifications
-- Responsive design
-- Professional styling
+- Simple notifications
+- Clean design
+- Easy to use
 
-## 🔧 API Endpoints
+## API Endpoints
 
 ### Authentication
 - `POST /api/auth/register` - User registration
@@ -183,22 +183,22 @@ The most valuable lesson was learning to be patient and systematic when debuggin
 - `POST /api/groups/:id/favorite` - Toggle favorite
 - `GET /api/groups/user/:userId` - Get user-specific groups
 
-## 🎨 UI/UX Highlights
+## UI/UX
 
-- **Clean, Modern Design**: Professional styling with consistent color scheme
-- **Intuitive Navigation**: Tabbed interface for easy group management
-- **Responsive Layout**: Works on desktop and mobile devices
-- **Interactive Elements**: Hover effects, animations, and visual feedback
-- **Accessibility**: Clear labels, proper contrast, and keyboard navigation
+- **Clean Design**: Simple styling with consistent colors
+- **Easy Navigation**: Tabbed interface for group management
+- **Works Everywhere**: Desktop and mobile devices
+- **Interactive**: Hover effects and visual feedback
+- **Accessible**: Clear labels and keyboard navigation
 
-## 🚀 Deployment Ready
+## Deployment Ready
 
-The application is ready for deployment on platforms like:
+The app is ready for deployment on:
 - **Frontend**: Netlify, Vercel, or GitHub Pages
 - **Backend**: Render, Heroku, or Railway
-- **Database**: MongoDB Atlas (already configured)
+- **Database**: MongoDB Atlas (already set up)
 
-## 📝 Future Enhancements
+## Future Ideas
 
 - Real-time notifications using WebSockets
 - Calendar integration for meeting scheduling
@@ -207,14 +207,11 @@ The application is ready for deployment on platforms like:
 - Mobile app development
 - Integration with Dartmouth's course catalog
 
-## 🤝 Contributing
+## Contributing
 
-This project was built as part of the DALI Lab "Choose Your Own Adventure Challenge" at Dartmouth College. The learning journey documented here showcases the iterative development process and problem-solving skills developed throughout the project.
+This project was built as part of the DALI Lab "Choose Your Own Adventure Challenge" at Dartmouth College. The learning journey shows the development process and problem-solving skills.
 
-## 📄 License
+## License
 
 This project is part of the DALI Lab educational initiative at Dartmouth College.
 
----
-
-**Built with ❤️ for the Dartmouth community** 
