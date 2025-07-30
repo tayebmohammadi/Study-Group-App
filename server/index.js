@@ -11,11 +11,19 @@ app.use(cors()); // Allows your React frontend to talk to this server
 app.use(express.json()); // Parses JSON data from requests
 
 // Connect to MongoDB database
-mongoose.connect('mongodb+srv://tayebmohammadi26:DALILab%40dartmouth123@cluster0.azmx8gv.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0')
-.then(() => console.log('Connected to MongoDB Atlas!'))
+console.log('Attempting to connect to MongoDB Atlas...');
+mongoose.connect('mongodb+srv://tayebmohammadi26:DALILab%40dartmouth123@cluster0.azmx8gv.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0', {
+  serverSelectionTimeoutMS: 5000, // 5 second timeout
+  socketTimeoutMS: 45000, // 45 second timeout
+})
+.then(() => {
+  console.log('Connected to MongoDB Atlas!');
+  console.log('Database connection successful');
+})
 .catch(err => {
-  console.log('MongoDB connection error:', err);
-  console.log('To use MongoDB, install it with: brew install mongodb-community');
+  console.log('MongoDB connection error:', err.message);
+  console.log('Error details:', err);
+  console.log('Please check your MongoDB Atlas connection string and network access');
 });
 
 // Basic route to test if server is working
