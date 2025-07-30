@@ -1481,7 +1481,7 @@ function LibraryHelper() {
       <div className="helper-actions">
         <a 
           href="https://www.library.dartmouth.edu/visit/spaces" 
-          target="_blank" 
+          target="_blank"
           rel="noopener noreferrer"
           className="library-link-btn"
         >
