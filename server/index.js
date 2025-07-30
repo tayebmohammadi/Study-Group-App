@@ -33,7 +33,10 @@ app.get('/', (req, res) => {
 
 // Import and use routes
 const groupRoutes = require('./routes/groups');
+const authRoutes = require('./routes/auth');
+
 app.use('/api/groups', groupRoutes);
+app.use('/api/auth', authRoutes);
 
 // Start the server
 const PORT = process.env.PORT || 3001;
