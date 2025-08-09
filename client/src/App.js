@@ -71,7 +71,8 @@ function App() {
   const [error, setError] = useState('');
   const [notification, setNotification] = useState('');
   const [editingGroup, setEditingGroup] = useState(null);
-
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [selectedGroup, setSelectedGroup] = useState(null);
 
 
   const fetchGroups = async (currentUser = user) => {
@@ -318,9 +319,7 @@ function App() {
 
   // Fetch groups when user changes
   useEffect(() => {
-    if (user) {
-      fetchGroups(user);
-    }
+    fetchGroups(user);
   }, [user]);
 
   // Debug logging
@@ -339,6 +338,16 @@ function App() {
           onSubmit={updateGroup} 
           onClose={() => setEditingGroup(null)} 
           showNotification={showNotification}
+        />
+      )}
+      {showDetailsModal && selectedGroup && (
+        <GroupDetailsModal 
+          group={selectedGroup} 
+          isOpen={showDetailsModal} 
+          onClose={() => {
+            setShowDetailsModal(false);
+            setSelectedGroup(null);
+          }} 
         />
       )}
       <header className="App-header">
@@ -402,17 +411,17 @@ function App() {
                 {activeTab === 'my-groups' && (
               <div className="groups-section">
                 <h2>My Groups</h2>
-                <div className="groups-list">
-                  {(() => {
-                    const myGroups = groups.filter(group => group.userStatus?.isMember || group.userStatus?.isOwner);
-                    console.log('My Groups filter:', {
-                      totalGroups: groups.length,
-                      myGroupsCount: myGroups.length,
-                      groups: groups.map(g => ({ name: g.name, isMember: g.userStatus?.isMember, isOwner: g.userStatus?.isOwner }))
-                    });
-                    return (
-                      <>
-                        <p style={{color: 'green', fontWeight: 'bold'}}>Found {myGroups.length} groups for you!</p>
+                {(() => {
+                  const myGroups = groups.filter(group => group.userStatus?.isMember || group.userStatus?.isOwner);
+                  console.log('My Groups filter:', {
+                    totalGroups: groups.length,
+                    myGroupsCount: myGroups.length,
+                    groups: groups.map(g => ({ name: g.name, isMember: g.userStatus?.isMember, isOwner: g.userStatus?.isOwner }))
+                  });
+                  return (
+                    <>
+                      <p className="list-count">Found {myGroups.length} groups for you!</p>
+                      <div className="groups-list">
                         {myGroups.map(group => (
                           <GroupCard 
                             key={group._id} 
@@ -426,29 +435,33 @@ function App() {
                             onDeleteGroup={deleteGroup}
                             setEditingGroup={setEditingGroup}
                             onToggleFavorite={toggleFavorite}
+                            onShowDetails={(group) => {
+                              setSelectedGroup(group);
+                              setShowDetailsModal(true);
+                            }}
                           />
                         ))}
-                      </>
-                    );
-                  })()}
-                </div>
+                      </div>
+                    </>
+                  );
+                })()}
               </div>
             )}
             
             {activeTab === 'available' && (
               <div className="groups-section">
                 <h2>Available Groups</h2>
-                <div className="groups-list">
-                  {(() => {
-                    const availableGroups = groups.filter(group => !group.userStatus?.isMember && !group.userStatus?.isOwner);
-                    console.log('Available Groups filter:', {
-                      totalGroups: groups.length,
-                      availableGroupsCount: availableGroups.length,
-                      groups: groups.map(g => ({ name: g.name, isMember: g.userStatus?.isMember, isOwner: g.userStatus?.isOwner }))
-                    });
-                    return (
-                      <>
-                        <p style={{color: 'green', fontWeight: 'bold'}}>Found {availableGroups.length} available groups!</p>
+                {(() => {
+                  const availableGroups = groups.filter(group => !group.userStatus?.isMember && !group.userStatus?.isOwner);
+                  console.log('Available Groups filter:', {
+                    totalGroups: groups.length,
+                    availableGroupsCount: availableGroups.length,
+                    groups: groups.map(g => ({ name: g.name, isMember: g.userStatus?.isMember, isOwner: g.userStatus?.isOwner }))
+                  });
+                  return (
+                    <>
+                      <p className="list-count">Found {availableGroups.length} available groups!</p>
+                      <div className="groups-list">
                         {availableGroups.map(group => (
                           <GroupSummary 
                             key={group._id} 
@@ -456,29 +469,33 @@ function App() {
                             user={user} 
                             onJoinGroup={joinGroup} 
                             onToggleFavorite={toggleFavorite}
+                            onShowDetails={(group) => {
+                              setSelectedGroup(group);
+                              setShowDetailsModal(true);
+                            }}
                           />
                         ))}
-                      </>
-                    );
-                  })()}
-                </div>
+                      </div>
+                    </>
+                  );
+                })()}
               </div>
             )}
             
             {activeTab === 'favorites' && (
               <div className="groups-section">
                 <h2>Favorite Groups</h2>
-                <div className="groups-list">
-                  {(() => {
-                    const favoriteGroups = groups.filter(group => group.userStatus?.isFavorited);
-                    console.log('Favorites filter:', {
-                      totalGroups: groups.length,
-                      favoriteGroupsCount: favoriteGroups.length,
-                      groups: groups.map(g => ({ name: g.name, isFavorited: g.userStatus?.isFavorited }))
-                    });
-                    return (
-                      <>
-                        <p style={{color: 'green', fontWeight: 'bold'}}>Found {favoriteGroups.length} favorite groups!</p>
+                {(() => {
+                  const favoriteGroups = groups.filter(group => group.userStatus?.isFavorited);
+                  console.log('Favorites filter:', {
+                    totalGroups: groups.length,
+                    favoriteGroupsCount: favoriteGroups.length,
+                    groups: groups.map(g => ({ name: g.name, isFavorited: g.userStatus?.isFavorited }))
+                  });
+                  return (
+                    <>
+                      <p className="list-count">Found {favoriteGroups.length} favorite groups!</p>
+                      <div className="groups-list">
                         {favoriteGroups.map(group => (
                           <GroupCard 
                             key={group._id} 
@@ -492,12 +509,16 @@ function App() {
                             onDeleteGroup={deleteGroup}
                             setEditingGroup={setEditingGroup}
                             onToggleFavorite={toggleFavorite}
+                            onShowDetails={(group) => {
+                              setSelectedGroup(group);
+                              setShowDetailsModal(true);
+                            }}
                           />
                         ))}
-                      </>
-                    );
-                  })()}
-                </div>
+                      </div>
+                    </>
+                  );
+                })()}
               </div>
             )}
             
@@ -883,17 +904,31 @@ function CreateGroupForm({ onSubmit, showNotification }) {
 }
 
 // Group Card Component
-function GroupCard({ group, user, onJoinGroup, onApproveRequest, onDenyRequest, onLeaveGroup, onUpdateGroup, onDeleteGroup, setEditingGroup, onToggleFavorite }) {
+function GroupCard({ group, user, onJoinGroup, onApproveRequest, onDenyRequest, onLeaveGroup, onUpdateGroup, onDeleteGroup, setEditingGroup, onToggleFavorite, onShowDetails }) {
   const isOwner = Boolean(group.userStatus?.isOwner);
   const isMember = Boolean(group.userStatus?.isMember);
   const hasRequested = Boolean(group.userStatus?.hasRequested);
   const isWaitlisted = Boolean(group.userStatus?.isWaitlisted);
   const isFavorited = Boolean(group.userStatus?.isFavorited);
   const canJoin = !isMember && !hasRequested && !isOwner;
-  const [showDetails, setShowDetails] = useState(false);
+  const [showMenu, setShowMenu] = useState(false);
   
+  // Close menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (showMenu && !event.target.closest('.three-dot-menu')) {
+        setShowMenu(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showMenu]);
+
   // Debug logging for showDetails state
-  console.log('GroupCard render for', group.name, 'showDetails:', showDetails);
+  console.log('GroupCard render for', group.name, 'showDetails:', false);
 
   // Debug logging
   console.log('GroupCard render:', {
@@ -911,131 +946,96 @@ function GroupCard({ group, user, onJoinGroup, onApproveRequest, onDenyRequest, 
     <div className="group-card">
       <div className="group-card-header">
         <h3>{group.name}</h3>
-        {user && (
-          <button 
-            onClick={() => onToggleFavorite(group._id)}
-            className={`favorite-star ${isFavorited ? 'favorited' : ''}`}
-            title={isFavorited ? 'Remove from favorites' : 'Add to favorites'}
-          >
-            {isFavorited ? '★' : '☆'}
-          </button>
-        )}
+        <div className="card-actions">
+          {user && (
+            <button 
+              onClick={() => onToggleFavorite(group._id)}
+              className={`favorite-star ${isFavorited ? 'favorited' : ''}`}
+              title={isFavorited ? 'Remove from favorites' : 'Add to favorites'}
+            >
+              {isFavorited ? '★' : '☆'}
+            </button>
+          )}
+          <div className="three-dot-menu">
+            <button 
+              onClick={() => setShowMenu(!showMenu)}
+              className="three-dot-btn"
+              title="More options"
+            >
+              ⋯
+            </button>
+            {showMenu && (
+              <div className="menu-dropdown">
+                {isOwner && (
+                  <button onClick={() => setEditingGroup(group)} className="menu-item">
+                    Edit Group
+                  </button>
+                )}
+                {isMember && !isOwner && (
+                  <button onClick={() => onLeaveGroup(group._id)} className="menu-item">
+                    Leave Group
+                  </button>
+                )}
+                {isOwner && (
+                  <button onClick={() => onDeleteGroup(group._id)} className="menu-item delete">
+                    Delete Group
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
       </div>
       
       {/* Basic Info - Always Visible */}
       <div className="group-basic-info">
         <p><strong>Topic:</strong> {group.topic}</p>
-        <p><strong>Members:</strong> {group.members ? group.members.length : 0}/{group.capacity}</p>
         
         {/* Show meeting info if available, otherwise show message */}
         {group.meetingDate && group.meetingTime && group.meetingType && 
          group.meetingDate.trim() && group.meetingTime.trim() && group.meetingType.trim() ? (
-          <div className="meeting-basic-info">
-            <p><strong>Date:</strong> {new Date(group.meetingDate).toLocaleDateString()}</p>
-            <p><strong>Time:</strong> {group.meetingTime}</p>
-            <p><strong>Type:</strong> {group.meetingType === 'in-person' ? 'In-Person' : group.meetingType === 'online' ? 'Online' : 'Hybrid'}</p>
+          <div className="meeting-info">
+            {(() => {
+              const date = new Date(group.meetingDate);
+              const time = group.meetingTime;
+              const [hours, minutes] = time.split(':');
+              const hour = parseInt(hours);
+              const period = hour >= 12 ? 'PM' : 'AM';
+              const displayHour = hour > 12 ? hour - 12 : hour === 0 ? 12 : hour;
+              const displayTime = `${displayHour}:${minutes} ${period}`;
+              
+              const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+              const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+              
+              const dayName = dayNames[date.getDay()];
+              const monthName = monthNames[date.getMonth()];
+              const day = date.getDate();
+              
+              const meetingTypeDisplay = group.meetingType === 'in-person' ? 'In-person' : 
+                                       group.meetingType === 'online' ? 'Online' : 'Hybrid';
+              
+              const memberCount = group.members ? group.members.length : 0;
+              const attendanceText = memberCount > 0 ? `${memberCount} going` : '';
+              
+              return (
+                <>
+                  <p className="meeting-time">{dayName}, {monthName} {day} {displayTime}</p>
+                  <p className="meeting-attendance">{attendanceText ? `${attendanceText}, ` : ''}{meetingTypeDisplay}</p>
+                </>
+              );
+            })()}
           </div>
         ) : (
-          <div className="meeting-basic-info">
+          <div className="meeting-info">
             <p><strong>Meeting Details:</strong> <span style={{color: '#e74c3c', fontStyle: 'italic'}}>Not set</span></p>
           </div>
         )}
       </div>
 
-      {/* Hidden Details Popup */}
-      {showDetails && (
-        <div className="details-popup-overlay" onClick={() => setShowDetails(false)}>
-          <div className="details-popup" onClick={(e) => e.stopPropagation()}>
-            <h4>Group Details - {group.name}</h4>
-            <div className="popup-content">
-              <p><strong>Description:</strong> {group.description}</p>
-              <p><strong>Mode:</strong> {group.mode}</p>
-              <p><strong>Privacy:</strong> {group.privacy}</p>
-              <p><strong>Duration:</strong> {group.meetingDuration || 'Not set'} minutes</p>
-              
-              {/* Meeting Details Section */}
-              <div style={{marginTop: '15px', paddingTop: '15px', borderTop: '1px solid #eee'}}>
-                <h5 style={{marginBottom: '10px', color: '#2c3e50'}}>Meeting Details</h5>
-                
-                {group.meetingDate && group.meetingTime && group.meetingType && 
-                 group.meetingDate.trim() && group.meetingTime.trim() && group.meetingType.trim() ? (
-                  <>
-                    <p><strong>Date:</strong> {new Date(group.meetingDate).toLocaleDateString()}</p>
-                    <p><strong>Time:</strong> {group.meetingTime}</p>
-                    <p><strong>Type:</strong> {group.meetingType === 'in-person' ? 'In-Person' : group.meetingType === 'online' ? 'Online' : 'Hybrid'}</p>
-                    
-                    {/* Show location for everyone */}
-                    {group.meetingLocation && (
-                      <p><strong>Location:</strong> {group.meetingLocation}</p>
-                    )}
-                    
-                    {/* Show room/URL only for members */}
-                    {(isMember || isOwner) && (
-                      <>
-                        {group.meetingRoom && (
-                          <p><strong>Room:</strong> {group.meetingRoom}</p>
-                        )}
-                        {group.meetingUrl && (
-                          <p><strong>Meeting URL:</strong> 
-                            <a href={group.meetingUrl} target="_blank" rel="noopener noreferrer" className="meeting-link">
-                              Join Meeting
-                            </a>
-                          </p>
-                        )}
-                      </>
-                    )}
-                    
-                    {/* Show message for non-members about room/URL */}
-                    {!(isMember || isOwner) && (group.meetingRoom || group.meetingUrl) && (
-                      <p className="member-only-notice">
-                        <em>Room details and meeting URL are only visible to group members.</em>
-                      </p>
-                    )}
-                  </>
-                ) : (
-                  <p style={{color: '#e74c3c', fontStyle: 'italic'}}>
-                    <strong>Meeting details not set.</strong> The group owner needs to add meeting information.
-                  </p>
-                )}
-              </div>
-            </div>
-            <button onClick={() => setShowDetails(false)} className="close-popup-btn">Close</button>
-          </div>
-        </div>
-      )}
-
       {/* Action Buttons */}
       <div className="group-actions">
-        {canJoin && (
-          <button onClick={() => onJoinGroup(group._id)} className="join-btn">
-            {group.privacy === 'public' ? 'Join Group' : 'Request to Join'}
-          </button>
-        )}
-
-        {hasRequested && (
-          <span className="pending-status">Request Pending...</span>
-        )}
-
-        {isWaitlisted && (
-          <span className="waitlist-status">✓ Waitlisted</span>
-        )}
-
-        {isMember && !isOwner && (
-          <button onClick={() => onLeaveGroup(group._id)} className="leave-btn">Leave Group</button>
-        )}
-
-        {isOwner && (
-          <>
-            <button onClick={() => setEditingGroup(group)} className="edit-btn">Edit Group</button>
-            <button onClick={() => onDeleteGroup(group._id)} className="delete-btn">Delete Group</button>
-          </>
-        )}
-
         {/* Show Details Button */}
-        <button onClick={() => {
-          console.log('Show Details clicked for group:', group.name);
-          setShowDetails(true);
-        }} className="show-details-btn">
+        <button onClick={() => onShowDetails(group)} className="show-details-btn">
           Show Details
         </button>
       </div>
@@ -1071,130 +1071,99 @@ function GroupCard({ group, user, onJoinGroup, onApproveRequest, onDenyRequest, 
   );
 }
 
-function GroupSummary({ group, user, onJoinGroup, onToggleFavorite }) {
+function GroupSummary({ group, user, onJoinGroup, onToggleFavorite, onShowDetails }) {
   const isOwner = Boolean(group.userStatus?.isOwner);
   const isMember = Boolean(group.userStatus?.isMember);
   const hasRequested = Boolean(group.userStatus?.hasRequested);
   const isWaitlisted = Boolean(group.userStatus?.isWaitlisted);
   const isFavorited = Boolean(group.userStatus?.isFavorited);
   const canJoin = !isMember && !hasRequested && !isOwner;
-  const [showDetails, setShowDetails] = useState(false);
-
+ 
   return (
     <div className="group-card">
       <div className="group-card-header">
         <h3>{group.name}</h3>
-        {user && (
-          <button 
-            onClick={() => onToggleFavorite(group._id)}
-            className={`favorite-star ${isFavorited ? 'favorited' : ''}`}
-            title={isFavorited ? 'Remove from favorites' : 'Add to favorites'}
-          >
-            {isFavorited ? '★' : '☆'}
-          </button>
-        )}
+        <div className="card-actions">
+          {user && (
+            <button 
+              onClick={() => onToggleFavorite(group._id)}
+              className={`favorite-star ${isFavorited ? 'favorited' : ''}`}
+              title={isFavorited ? 'Remove from favorites' : 'Add to favorites'}
+            >
+              {isFavorited ? '★' : '☆'}
+            </button>
+          )}
+        </div>
       </div>
       
       {/* Basic Info - Always Visible */}
       <div className="group-basic-info">
         <p><strong>Topic:</strong> {group.topic}</p>
-        <p><strong>Members:</strong> {group.members ? group.members.length : 0}/{group.capacity}</p>
         
         {/* Show meeting info if available, otherwise show message */}
         {group.meetingDate && group.meetingTime && group.meetingType && 
          group.meetingDate.trim() && group.meetingTime.trim() && group.meetingType.trim() ? (
-          <div className="meeting-basic-info">
-            <p><strong>Date:</strong> {new Date(group.meetingDate).toLocaleDateString()}</p>
-            <p><strong>Time:</strong> {group.meetingTime}</p>
-            <p><strong>Type:</strong> {group.meetingType === 'in-person' ? 'In-Person' : group.meetingType === 'online' ? 'Online' : 'Hybrid'}</p>
+          <div className="meeting-info">
+            {(() => {
+              const date = new Date(group.meetingDate);
+              const time = group.meetingTime;
+              const [hours, minutes] = time.split(':');
+              const hour = parseInt(hours);
+              const period = hour >= 12 ? 'PM' : 'AM';
+              const displayHour = hour > 12 ? hour - 12 : hour === 0 ? 12 : hour;
+              const displayTime = `${displayHour}:${minutes} ${period}`;
+              
+              const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+              const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+              
+              const dayName = dayNames[date.getDay()];
+              const monthName = monthNames[date.getMonth()];
+              const day = date.getDate();
+              
+              const meetingTypeDisplay = group.meetingType === 'in-person' ? 'In-person' : 
+                                       group.meetingType === 'online' ? 'Online' : 'Hybrid';
+              
+              const memberCount = group.members ? group.members.length : 0;
+              const attendanceText = memberCount > 0 ? `${memberCount} going` : '';
+              
+              return (
+                <>
+                  <p className="meeting-time">{dayName}, {monthName} {day} {displayTime}</p>
+                  <p className="meeting-attendance">{attendanceText ? `${attendanceText}, ` : ''}{meetingTypeDisplay}</p>
+                </>
+              );
+            })()}
           </div>
         ) : (
-          <div className="meeting-basic-info">
+          <div className="meeting-info">
             <p><strong>Meeting Details:</strong> <span style={{color: '#e74c3c', fontStyle: 'italic'}}>Not set</span></p>
           </div>
         )}
       </div>
 
-      {/* Hidden Details Popup */}
-      {showDetails && (
-        <div className="details-popup-overlay" onClick={() => setShowDetails(false)}>
-          <div className="details-popup" onClick={(e) => e.stopPropagation()}>
-            <h4>Group Details - {group.name}</h4>
-            <div className="popup-content">
-              <p><strong>Description:</strong> {group.description}</p>
-              <p><strong>Mode:</strong> {group.mode}</p>
-              <p><strong>Privacy:</strong> {group.privacy}</p>
-              <p><strong>Duration:</strong> {group.meetingDuration || 'Not set'} minutes</p>
-              
-              {/* Meeting Details Section */}
-              <div style={{marginTop: '15px', paddingTop: '15px', borderTop: '1px solid #eee'}}>
-                <h5 style={{marginBottom: '10px', color: '#2c3e50'}}>Meeting Details</h5>
-                
-                {group.meetingDate && group.meetingTime && group.meetingType && 
-                 group.meetingDate.trim() && group.meetingTime.trim() && group.meetingType.trim() ? (
-                  <>
-                    <p><strong>Date:</strong> {new Date(group.meetingDate).toLocaleDateString()}</p>
-                    <p><strong>Time:</strong> {group.meetingTime}</p>
-                    <p><strong>Type:</strong> {group.meetingType === 'in-person' ? 'In-Person' : group.meetingType === 'online' ? 'Online' : 'Hybrid'}</p>
-                    
-                    {/* Show location for everyone */}
-                    {group.meetingLocation && (
-                      <p><strong>Location:</strong> {group.meetingLocation}</p>
-                    )}
-                    
-                    {/* Show room/URL only for members */}
-                    {(isMember || isOwner) && (
-                      <>
-                        {group.meetingRoom && (
-                          <p><strong>Room:</strong> {group.meetingRoom}</p>
-                        )}
-                        {group.meetingUrl && (
-                          <p><strong>Meeting URL:</strong> 
-                            <a href={group.meetingUrl} target="_blank" rel="noopener noreferrer" className="meeting-link">
-                              Join Meeting
-                            </a>
-                          </p>
-                        )}
-                      </>
-                    )}
-                    
-                    {/* Show message for non-members about room/URL */}
-                    {!(isMember || isOwner) && (group.meetingRoom || group.meetingUrl) && (
-                      <p className="member-only-notice">
-                        <em>Room details and meeting URL are only visible to group members.</em>
-                      </p>
-                    )}
-                  </>
-                ) : (
-                  <p style={{color: '#e74c3c', fontStyle: 'italic'}}>
-                    <strong>Meeting details not set.</strong> The group owner needs to add meeting information.
-                  </p>
-                )}
-              </div>
-            </div>
-            <button onClick={() => setShowDetails(false)} className="close-popup-btn">Close</button>
-          </div>
-        </div>
-      )}
-
       {/* Action Buttons */}
       <div className="group-actions">
         {canJoin && (
-          <button onClick={() => onJoinGroup(group._id)} className="join-btn">
+          <button
+            onClick={() => onJoinGroup(group._id)}
+            className="join-btn"
+            title={group.privacy === 'public' ? 'Join this group' : 'Request to join this private group'}
+          >
             {group.privacy === 'public' ? 'Join Group' : 'Request to Join'}
           </button>
         )}
-
         {hasRequested && (
-          <span className="pending-status">Request Pending...</span>
+          <button className="pending-btn" disabled>
+            Request Pending...
+          </button>
         )}
-
         {isWaitlisted && (
-          <span className="waitlist-status">✓ Waitlisted</span>
+          <button className="pending-btn" disabled>
+            ✓ Waitlisted
+          </button>
         )}
-
         {/* Show Details Button */}
-        <button onClick={() => setShowDetails(true)} className="show-details-btn">
+        <button onClick={() => onShowDetails(group)} className="show-details-btn">
           Show Details
         </button>
       </div>
@@ -1487,6 +1456,124 @@ function LibraryHelper() {
         >
           Reserve a Room
         </a>
+      </div>
+    </div>
+  );
+}
+
+// Group Details Modal Component
+function GroupDetailsModal({ group, isOpen, onClose }) {
+  const handleBackdropClick = (e) => {
+    if (e.target === e.currentTarget) {
+      onClose();
+    }
+  };
+
+  const handleEscapeKey = (e) => {
+    if (e.key === 'Escape') {
+      onClose();
+    }
+  };
+
+  useEffect(() => {
+    if (isOpen) {
+      document.addEventListener('keydown', handleEscapeKey);
+      document.body.style.overflow = 'hidden';
+    }
+    return () => {
+      document.removeEventListener('keydown', handleEscapeKey);
+      document.body.style.overflow = 'unset';
+    };
+  }, [isOpen]);
+
+  if (!isOpen || !group) return null;
+
+  return (
+    <div className="modal-overlay" onClick={handleBackdropClick}>
+      <div className="modal-content">
+        <div className="modal-header">
+          <h2>Group Details - {group.name}</h2>
+          <button className="modal-close-btn" onClick={onClose}>
+            ×
+          </button>
+        </div>
+        
+        <div className="modal-body">
+          <div className="info-item topic-row">
+            <strong>Topic:</strong>
+            <span>{group.topic}</span>
+          </div>
+
+          <div className="info-item description-row">
+            <strong>Description:</strong>
+            <span>{group.description}</span>
+          </div>
+
+          <div className="details-grid">
+            <div className="info-item">
+              <strong>Mode:</strong>
+              <span>{group.mode}</span>
+            </div>
+            <div className="info-item">
+              <strong>Privacy:</strong>
+              <span>{group.privacy}</span>
+            </div>
+            <div className="info-item">
+              <strong>Capacity:</strong>
+              <span>{group.members ? group.members.length : 0}/{group.capacity} members</span>
+            </div>
+            <div className="info-item">
+              <strong>Duration:</strong>
+              <span>{group.meetingDuration || 'Not set'} minutes</span>
+            </div>
+            {group.meetingDate && (
+              <div className="info-item">
+                <strong>Date:</strong>
+                <span>{new Date(group.meetingDate).toLocaleDateString()}</span>
+              </div>
+            )}
+            {group.meetingTime && (
+              <div className="info-item">
+                <strong>Time:</strong>
+                <span>{group.meetingTime}</span>
+              </div>
+            )}
+            {group.meetingType && (
+              <div className="info-item">
+                <strong>Type:</strong>
+                <span>{group.meetingType === 'in-person' ? 'In-Person' : group.meetingType === 'online' ? 'Online' : 'Hybrid'}</span>
+              </div>
+            )}
+            {group.meetingLocation && (
+              <div className="info-item">
+                <strong>Location:</strong>
+                <span>{group.meetingLocation}</span>
+              </div>
+            )}
+            {group.meetingRoom && (
+              <div className="info-item">
+                <strong>Room:</strong>
+                <span>{group.meetingRoom}</span>
+              </div>
+            )}
+            {group.meetingUrl && (
+              <div className="info-item">
+                <strong>Meeting URL:</strong>
+                <span>
+                  <a href={group.meetingUrl} target="_blank" rel="noopener noreferrer" className="meeting-link">
+                    Join Meeting
+                  </a>
+                </span>
+              </div>
+            )}
+          </div>
+        </div>
+        
+        <div className="modal-footer">
+          <button className="modal-close-button" onClick={onClose}>
+            Close
+          </button>
+        </div>
       </div>
     </div>
   );

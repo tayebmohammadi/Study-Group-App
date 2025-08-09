@@ -1,0 +1,3 @@
+dyld[2282]: Symbol not found: __ZNSt3__122__libcpp_verbose_abortEPKcz
+  Referenced from: <56D64BBE-1B39-39F1-B9D0-071F0F1D01DC> /usr/local/Cellar/node/24.5.0/bin/node (built for macOS 13.5 which is newer than running OS)
+  Expected in:     <B8339FB2-CBAE-3D84-B080-BD19DDB2981C> /usr/lib/libc++.1.dylib

@@ -223,6 +223,33 @@ main {
 
 .groups-list {
   text-align: left;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 40px; /* increased space between cards */
+  column-gap: 40px; /* explicit horizontal spacing */
+  row-gap: 32px; /* explicit vertical spacing */
+  align-items: stretch;
+  padding: 16px; /* more breathing room from container edges */
+  grid-auto-flow: row;
+}
+
+/* Responsive grid similar to Meetup's layout */
+@media (max-width: 1024px) {
+  .groups-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 32px; /* generous spacing on tablets */
+    column-gap: 32px;
+    row-gap: 28px;
+  }
+}
+
+@media (max-width: 640px) {
+  .groups-list {
+    grid-template-columns: 1fr;
+    gap: 20px; /* comfortable spacing on mobile */
+    column-gap: 20px;
+    row-gap: 16px;
+  }
 }
 
 .groups-list h2 {
@@ -231,23 +258,36 @@ main {
 }
 
 .group-card {
-  background: white;
-  border-radius: 8px;
-  padding: 20px;
-  margin-bottom: 15px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-  transition: transform 0.2s;
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 18px;
+  margin: 0; /* grid handles spacing */
+  border: 1px solid #e6e6e6; /* clearer separation */
+  box-shadow: 0 1px 2px rgba(0,0,0,0.06);
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden; /* ensure content doesn't spill and appear overlapping */
+  box-sizing: border-box; /* prevent padding/border from overflowing grid track */
+  min-width: 0; /* allow item to shrink within track */
 }
+
+/* Ensure all direct children of the grid can shrink and not overflow horizontally */
+.groups-list > * { min-width: 0; }
 
 .group-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+  box-shadow: 0 10px 22px rgba(0,0,0,0.14);
 }
 
 .group-card h3 {
-  color: #282c34;
+  color: #1f2937; /* darker for stronger emphasis */
   margin-top: 0;
   margin-bottom: 10px;
+  font-size: 1.25rem;
+  line-height: 1.3;
+  font-weight: 700;
 }
 
 .group-card p {
@@ -681,6 +721,100 @@ main {
   font-size: 0.9rem;
 }
 
+/* --- Visual and layout improvements for group cards --- */
+.list-count {
+  margin: 0 0 12px 0;
+  color: #2f855a;
+  font-weight: 600;
+}
+
+/* Stronger separation so cards don't blend together */
+.group-card {
+  border: 1px solid #e6e6e6;
+}
+
+.group-card:hover {
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.18);
+}
+
+/* Card Actions and 3-dot Menu */
+.card-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.three-dot-menu {
+  position: relative;
+}
+
+.three-dot-btn {
+  background: none;
+  border: none;
+  font-size: 18px;
+  color: #666;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+  line-height: 1;
+}
+
+.three-dot-btn:hover {
+  background-color: #f0f0f0;
+  color: #333;
+}
+
+.menu-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  min-width: 140px;
+  margin-top: 4px;
+  overflow: hidden;
+}
+
+.menu-item {
+  display: block;
+  width: 100%;
+  padding: 12px 16px;
+  border: none;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+  font-size: 14px;
+  color: #333;
+  transition: background-color 0.2s;
+}
+
+.menu-item:hover {
+  background-color: #f8f9fa;
+}
+
+.menu-item.delete {
+  color: #dc3545;
+  border-top: 1px solid #e0e0e0;
+}
+
+.menu-item.delete:hover {
+  background-color: #fff5f5;
+}
+
+.menu-item.disabled {
+  color: #999;
+  cursor: default;
+  font-style: italic;
+}
+
+.menu-item.disabled:hover {
+  background-color: transparent;
+}
+
 .view-details-btn {
   background: #007bff;
   color: white;
@@ -718,64 +852,160 @@ main {
   margin-top: 10px;
 }
 
+.meeting-time {
+  font-weight: 600;
+  color: #2c3e50;
+  margin: 0 0 4px 0;
+  font-size: 14px;
+}
+
+.meeting-attendance {
+  color: #666;
+  margin: 0;
+  font-size: 13px;
+}
+
+.meeting-type {
+  color: #007bff;
+  margin: 0;
+  font-size: 13px;
+  font-weight: 500;
+}
+
 .details-popup-overlay {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.6);
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 1000;
+  z-index: 9999;
+  padding: 20px;
+  backdrop-filter: blur(2px);
 }
 
 .details-popup {
   background: white;
-  padding: 25px;
-  border-radius: 10px;
-  max-width: 500px;
+  padding: 30px;
+  border-radius: 12px;
+  max-width: 600px;
   width: 90%;
   max-height: 80vh;
   overflow-y: auto;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+  position: relative;
+  transform: none;
+  animation: modalFadeIn 0.2s ease-out;
+}
+
+@keyframes modalFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
 }
 
 .details-popup h4 {
   margin-top: 0;
   color: #333;
   border-bottom: 2px solid #007bff;
-  padding-bottom: 10px;
+  padding-bottom: 15px;
+  font-size: 1.4rem;
+}
+
+.popup-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 20px;
+  border-bottom: 2px solid #007bff;
+  padding-bottom: 15px;
+}
+
+.popup-header h4 {
+  margin: 0;
+  color: #333;
+  font-size: 1.4rem;
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.popup-close-btn {
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: #666;
+  cursor: pointer;
+  padding: 0;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.2s;
+}
+
+.popup-close-btn:hover {
+  background-color: #f0f0f0;
+  color: #333;
 }
 
 .popup-content {
   margin: 20px 0;
+  line-height: 1.6;
+}
+
+.detail-section {
+  margin-bottom: 25px;
+}
+
+.detail-section:last-child {
+  margin-bottom: 0;
+}
+
+.detail-section h5 {
+  color: #2c3e50;
+  margin: 0 0 12px 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 8px;
 }
 
 .popup-content p {
-  margin: 10px 0;
+  margin: 12px 0;
   line-height: 1.5;
 }
 
 .member-only-notice {
   margin-top: 15px;
-  padding: 10px;
+  padding: 12px;
   background: #fff3cd;
   border: 1px solid #ffeaa7;
-  border-radius: 4px;
+  border-radius: 6px;
   color: #856404;
-  font-size: 0.85rem;
+  font-size: 0.9rem;
 }
 
 .close-popup-btn {
   background: #6c757d;
   color: white;
   border: none;
-  padding: 10px 20px;
-  border-radius: 5px;
+  padding: 12px 24px;
+  border-radius: 6px;
   cursor: pointer;
   font-size: 14px;
+  font-weight: 500;
+  margin-top: 20px;
+  transition: background-color 0.2s;
 }
 
 .close-popup-btn:hover {
@@ -799,10 +1029,44 @@ main {
 
 .group-actions {
   display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-  margin-top: 15px;
+  align-items: center;
+  gap: 8px;
 }
+
+/* Make action buttons consistent */
+.group-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Unify action button sizing */
+.show-details-btn,
+.join-btn,
+.pending-btn {
+  padding: 10px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: 6px;
+  line-height: 1;
+  min-width: 150px;
+}
+
+/* Remove extra margin that misaligns buttons */
+.show-details-btn { margin-left: 0; }
+.join-btn { margin-right: 0; }
+
+/* Keep existing colors */
+.show-details-btn { background: #17a2b8; color: #fff; border: none; cursor: pointer; }
+.show-details-btn:hover { background: #138496; }
+
+.join-btn { background: #2f855a; color: #fff; border: none; cursor: pointer; }
+.join-btn:hover { background: #276749; }
+
+.pending-btn { background: #e2e8f0; color: #475569; border: none; }
+
+/* Ensure container aligns them level */
+.group-actions { display: flex; align-items: center; gap: 8px; }
 
 /* Time Input Styles */
 .time-input-container {
@@ -1158,4 +1422,271 @@ main {
 .create-group textarea:focus:invalid,
 .create-group select:focus:invalid {
   box-shadow: 0 0 0 2px rgba(231, 76, 60, 0.2);
+}
+
+/* Modal Styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+  padding: 20px;
+  backdrop-filter: blur(2px);
+}
+
+.modal-content {
+  background: white;
+  border-radius: 12px;
+  max-width: 600px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+  position: relative;
+  animation: modalFadeIn 0.3s ease-out;
+}
+
+@keyframes modalFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  border-bottom: 1px solid #e0e0e0;
+  background: #f8f9fa;
+  border-radius: 12px 12px 0 0;
+}
+
+.modal-header h2 {
+  margin: 0;
+  color: #2c3e50;
+  font-size: 1.4rem;
+  font-weight: 600;
+}
+
+.modal-close-btn {
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: #666;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: all 0.2s;
+  line-height: 1;
+}
+
+.modal-close-btn:hover {
+  background-color: #e0e0e0;
+  color: #333;
+}
+
+.modal-body {
+  padding: 24px;
+}
+
+.detail-section {
+  margin-bottom: 24px;
+}
+
+.detail-section:last-child {
+  margin-bottom: 0;
+}
+
+.detail-section h3 {
+  color: #2c3e50;
+  font-size: 1.2rem;
+  margin: 0 0 16px 0;
+  padding-bottom: 8px;
+  border-bottom: 2px solid #007bff;
+  font-weight: 600;
+}
+
+.info-grid {
+  display: grid;
+  gap: 16px;
+}
+
+/* Inline label-value pairs in modal */
+.info-item {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.info-item strong {
+  margin: 0;
+}
+
+.info-item span {
+  margin: 0;
+}
+
+.info-item p {
+  margin: 0;
+  color: #333;
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+.no-meeting-info {
+  background: #fff3cd;
+  border: 1px solid #ffeaa7;
+  border-radius: 6px;
+  padding: 12px;
+  color: #856404;
+  font-style: italic;
+}
+
+.modal-footer {
+  padding: 16px 24px;
+  border-top: 1px solid #e0e0e0;
+  background: #f8f9fa;
+  border-radius: 0 0 12px 12px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.modal-close-button {
+  background: #007bff;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: background-color 0.2s;
+}
+
+.modal-close-button:hover {
+  background: #0056b3;
+}
+
+.meeting-link {
+  color: #007bff;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.meeting-link:hover {
+  text-decoration: underline;
+}
+
+/* Responsive modal */
+@media (max-width: 768px) {
+  .modal-content {
+    width: 95%;
+    max-height: 90vh;
+  }
+  
+  .modal-header {
+    padding: 16px 20px;
+  }
+  
+  .modal-body {
+    padding: 20px;
+  }
+  
+  .modal-footer {
+    padding: 12px 20px;
+  }
+  
+  .modal-header h2 {
+    font-size: 1.2rem;
+  }
+}
+
+/* Modal two-column layout */
+.details-columns {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 24px;
+}
+
+@media (min-width: 768px) {
+  .details-columns {
+    grid-template-columns: 1fr 1fr;
+    align-items: start;
+  }
+}
+
+/* Ensure each section has its own card-like appearance if needed */
+.details-columns .detail-section {
+  background: #fff;
+  border: 1px solid #eaeaea;
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.details-columns .detail-section h3 {
+  margin-top: 0;
+}
+
+/* Description row at top */
+.description-row {
+  margin-bottom: 16px;
+}
+
+/* Two-column grid for remaining details */
+.details-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px 24px;
+}
+
+@media (min-width: 768px) {
+  .details-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* Topic row spacing */
+.topic-row {
+  margin-bottom: 8px;
+}
+
+/* Join/Request buttons in group cards */
+.join-btn {
+  background: #2f855a;
+  color: #fff;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  margin-right: 8px;
+}
+
+.join-btn:hover {
+  background: #276749;
+}
+
+.pending-btn {
+  background: #e2e8f0;
+  color: #475569;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  margin-right: 8px;
 }
