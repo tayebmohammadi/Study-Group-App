@@ -2,6 +2,253 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import './App.css';
 
+
+
+// Search and Filter Bar Component
+function SearchFilterBar({ 
+  searchQuery, 
+  onSearchChange, 
+  filters, 
+  onFiltersChange, 
+  sortBy, 
+  onSortChange,
+  onClearFilters,
+  totalGroups,
+  filteredCount 
+}) {
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
+  const [showSortDropdown, setShowSortDropdown] = useState(false);
+  const [localSearchQuery, setLocalSearchQuery] = useState(searchQuery);
+
+  // Debounced search
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      onSearchChange(localSearchQuery);
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [localSearchQuery, onSearchChange]);
+
+  // Close sort dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (showSortDropdown && !event.target.closest('.sort-section')) {
+        setShowSortDropdown(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showSortDropdown]);
+
+  const handleClearAll = () => {
+    setLocalSearchQuery('');
+    onClearFilters();
+  };
+
+  const getActiveFilterCount = () => {
+    let count = 0;
+    if (filters.meetingType !== 'all') count++;
+    if (filters.mode !== 'all') count++;
+    if (filters.privacy !== 'all') count++;
+    if (filters.capacity !== 'all') count++;
+    if (filters.timeRange !== 'all') count++;
+    return count;
+  };
+
+  const activeFilterCount = getActiveFilterCount();
+
+  return (
+    <div className="search-filter-container">
+      {/* Main Search Bar */}
+      <div className="search-bar">
+        <div className="search-input-wrapper">
+          <span className="search-icon">🔍</span>
+          <input
+            type="text"
+            placeholder="Search groups by name, topic, or location..."
+            value={localSearchQuery}
+            onChange={(e) => setLocalSearchQuery(e.target.value)}
+            className="search-input"
+          />
+          {localSearchQuery && (
+            <button 
+              onClick={() => setLocalSearchQuery('')}
+              className="clear-search-btn"
+            >
+              ×
+            </button>
+          )}
+        </div>
+        
+
+      </div>
+
+      {/* Filter and Sort Controls */}
+      <div className="filter-sort-controls">
+        <div className="filter-section">
+          <button
+            onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
+            className={`filter-toggle-btn ${showAdvancedFilters ? 'active' : ''}`}
+          >
+            {showAdvancedFilters ? 'Hide Filters' : 'Show Filters'}
+            <span className="filter-icon">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <line x1="4" y1="8" x2="20" y2="8" stroke="currentColor" strokeWidth="1.5"/>
+                <circle cx="6" cy="8" r="1.5" fill="currentColor"/>
+                <circle cx="18" cy="8" r="1.5" fill="currentColor"/>
+                <line x1="4" y1="16" x2="20" y2="16" stroke="currentColor" strokeWidth="1.5"/>
+                <circle cx="6" cy="16" r="1.5" fill="currentColor"/>
+                <circle cx="18" cy="16" r="1.5" fill="currentColor"/>
+              </svg>
+            </span>
+            {activeFilterCount > 0 && (
+              <span className="filter-badge">{activeFilterCount}</span>
+            )}
+          </button>
+        </div>
+
+        <div className="sort-section">
+          <button
+            onClick={() => setShowSortDropdown(!showSortDropdown)}
+            className="sort-toggle-btn"
+          >
+            Sort By
+            <span className="sort-icon">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M7 10l5 5 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </span>
+          </button>
+          {showSortDropdown && (
+            <div className="sort-dropdown">
+              <div className="sort-option" onClick={() => { onSortChange('newest'); setShowSortDropdown(false); }}>
+                Newest First
+              </div>
+              <div className="sort-option" onClick={() => { onSortChange('oldest'); setShowSortDropdown(false); }}>
+                Oldest First
+              </div>
+              <div className="sort-option" onClick={() => { onSortChange('name'); setShowSortDropdown(false); }}>
+                Name A-Z
+              </div>
+              <div className="sort-option" onClick={() => { onSortChange('name-desc'); setShowSortDropdown(false); }}>
+                Name Z-A
+              </div>
+              <div className="sort-option" onClick={() => { onSortChange('capacity'); setShowSortDropdown(false); }}>
+                Capacity (Low to High)
+              </div>
+              <div className="sort-option" onClick={() => { onSortChange('capacity-desc'); setShowSortDropdown(false); }}>
+                Capacity (High to Low)
+              </div>
+              <div className="sort-option" onClick={() => { onSortChange('date'); setShowSortDropdown(false); }}>
+                Meeting Date
+              </div>
+              <div className="sort-option" onClick={() => { onSortChange('popularity'); setShowSortDropdown(false); }}>
+                Most Members
+              </div>
+            </div>
+          )}
+        </div>
+
+        <div className="results-count">
+          <span>{filteredCount} groups</span>
+        </div>
+      </div>
+
+      {/* Advanced Filters */}
+      {showAdvancedFilters && (
+        <div className="advanced-filters">
+          <div className="filter-row">
+            <div className="filter-group">
+              <label>Meeting Type:</label>
+              <select
+                value={filters.meetingType}
+                onChange={(e) => onFiltersChange('meetingType', e.target.value)}
+                className="filter-select"
+              >
+                <option value="all">All Types</option>
+                <option value="in-person">In-Person</option>
+                <option value="online">Online</option>
+                <option value="hybrid">Hybrid</option>
+              </select>
+            </div>
+
+            <div className="filter-group">
+              <label>Study Mode:</label>
+              <select
+                value={filters.mode}
+                onChange={(e) => onFiltersChange('mode', e.target.value)}
+                className="filter-select"
+              >
+                <option value="all">All Modes</option>
+                <option value="collaborative">Collaborative</option>
+                <option value="quiet">Quiet Study</option>
+              </select>
+            </div>
+
+            <div className="filter-group">
+              <label>Privacy:</label>
+              <select
+                value={filters.privacy}
+                onChange={(e) => onFiltersChange('privacy', e.target.value)}
+                className="filter-select"
+              >
+                <option value="all">All Groups</option>
+                <option value="public">Public</option>
+                <option value="private">Private</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="filter-row">
+            <div className="filter-group">
+              <label>Capacity:</label>
+              <select
+                value={filters.capacity}
+                onChange={(e) => onFiltersChange('capacity', e.target.value)}
+                className="filter-select"
+              >
+                <option value="all">Any Size</option>
+                <option value="small">Small (2-5 people)</option>
+                <option value="medium">Medium (6-10 people)</option>
+                <option value="large">Large (11+ people)</option>
+              </select>
+            </div>
+
+            <div className="filter-group">
+              <label>Time Range:</label>
+              <select
+                value={filters.timeRange}
+                onChange={(e) => onFiltersChange('timeRange', e.target.value)}
+                className="filter-select"
+              >
+                <option value="all">Any Time</option>
+                <option value="today">Today</option>
+                <option value="tomorrow">Tomorrow</option>
+                <option value="this-week">This Week</option>
+                <option value="next-week">Next Week</option>
+              </select>
+            </div>
+
+            <div className="filter-group">
+              <label>Location:</label>
+              <input
+                type="text"
+                placeholder="Search by location..."
+                value={filters.location}
+                onChange={(e) => onFiltersChange('location', e.target.value)}
+                className="filter-input"
+              />
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // Advanced TimePicker Component with separate hour/minute scrolls
 function AdvancedTimePicker({ value, onChange, placeholder = "Select time" }) {
   const handleTimeChange = (e) => {
@@ -64,7 +311,7 @@ function AdvancedDatePicker({ value, onChange, placeholder = "Select date" }) {
 function App() {
   const [groups, setGroups] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('my-groups');
+  const [activeTab, setActiveTab] = useState('available');
   const [user, setUser] = useState(null);
   const [showAuth, setShowAuth] = useState(false);
   const [authMode, setAuthMode] = useState('login'); // 'login' or 'register'
@@ -73,6 +320,36 @@ function App() {
   const [editingGroup, setEditingGroup] = useState(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [selectedGroup, setSelectedGroup] = useState(null);
+
+  // Search and Filter State
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filters, setFilters] = useState({
+    meetingType: 'all',
+    mode: 'all',
+    privacy: 'all',
+    capacity: 'all',
+    timeRange: 'all',
+    location: ''
+  });
+  const [sortBy, setSortBy] = useState('newest');
+  const [filteredGroups, setFilteredGroups] = useState([]);
+  const [showPastGroups, setShowPastGroups] = useState(false);
+  const [showPastGroupsModal, setShowPastGroupsModal] = useState(false);
+  const [showCornerMenu, setShowCornerMenu] = useState(false);
+
+  // Close corner menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (showCornerMenu && !event.target.closest('.menu-container')) {
+        setShowCornerMenu(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showCornerMenu]);
 
 
   const fetchGroups = async (currentUser = user) => {
@@ -314,13 +591,192 @@ function App() {
     if (savedUser) {
       const parsedUser = JSON.parse(savedUser);
       setUser(parsedUser);
+      // Fetch groups immediately when user is restored
+      fetchGroups(parsedUser);
     }
   }, []);
 
-  // Fetch groups when user changes
+  // Fetch groups when user changes (but not on initial load)
   useEffect(() => {
-    fetchGroups(user);
+    if (user && groups.length === 0) {
+      fetchGroups(user);
+    }
   }, [user]);
+
+  // Filter and sort groups whenever groups, searchQuery, filters, or sortBy changes
+  useEffect(() => {
+    let filtered = [...groups];
+
+    // Separate active and past groups
+    const now = new Date();
+    const activeGroups = [];
+    const pastGroups = [];
+    
+    filtered.forEach(group => {
+      if (group.meetingDate && group.meetingTime) {
+        const meetingDateTime = new Date(`${group.meetingDate}T${group.meetingTime}`);
+        const thirtyDaysAgo = new Date(now.getTime() - (30 * 24 * 60 * 60 * 1000));
+        
+        if (meetingDateTime < now && meetingDateTime > thirtyDaysAgo) {
+          // Past group within 30 days (archived)
+          pastGroups.push({ ...group, isArchived: true });
+        } else if (meetingDateTime >= now) {
+          // Future group (active)
+          activeGroups.push({ ...group, isArchived: false });
+        } else {
+          // Very old group (older than 30 days) - exclude from both
+          // These should be auto-deleted by the backend
+        }
+      } else {
+        // Group without meeting date/time - treat as active
+        activeGroups.push({ ...group, isArchived: false });
+      }
+    });
+    
+    // Use appropriate group list based on showPastGroups state
+    const groupsToFilter = showPastGroups ? pastGroups : activeGroups;
+    
+    // Apply search filter
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      filtered = groupsToFilter.filter(group => 
+        group.name.toLowerCase().includes(query) ||
+        group.topic.toLowerCase().includes(query) ||
+        (group.description && group.description.toLowerCase().includes(query)) ||
+        (group.meetingLocation && group.meetingLocation.toLowerCase().includes(query)) ||
+        (group.meetingRoom && group.meetingRoom.toLowerCase().includes(query))
+      );
+    } else {
+      filtered = groupsToFilter;
+    }
+
+    // Apply filters (only for active groups)
+    if (!showPastGroups) {
+      if (filters.meetingType !== 'all') {
+        filtered = filtered.filter(group => group.meetingType === filters.meetingType);
+      }
+
+      if (filters.mode !== 'all') {
+        filtered = filtered.filter(group => group.mode === filters.mode);
+      }
+
+      if (filters.privacy !== 'all') {
+        filtered = filtered.filter(group => group.privacy === filters.privacy);
+      }
+
+      if (filters.capacity !== 'all') {
+        filtered = filtered.filter(group => {
+          const memberCount = group.members ? group.members.length : 0;
+          switch (filters.capacity) {
+            case 'small':
+              return memberCount <= 5;
+            case 'medium':
+              return memberCount >= 6 && memberCount <= 10;
+            case 'large':
+              return memberCount >= 11;
+            default:
+              return true;
+          }
+        });
+      }
+
+      if (filters.timeRange !== 'all') {
+        const now = new Date();
+        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        const tomorrow = new Date(today);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        const nextWeek = new Date(today);
+        nextWeek.setDate(nextWeek.getDate() + 7);
+
+        filtered = filtered.filter(group => {
+          if (!group.meetingDate) return false;
+          const meetingDate = new Date(group.meetingDate);
+          
+          switch (filters.timeRange) {
+            case 'today':
+              return meetingDate.getTime() === today.getTime();
+            case 'tomorrow':
+              return meetingDate.getTime() === tomorrow.getTime();
+            case 'this-week':
+              return meetingDate >= today && meetingDate < nextWeek;
+            case 'next-week':
+              const weekAfter = new Date(nextWeek);
+              weekAfter.setDate(weekAfter.getDate() + 7);
+              return meetingDate >= nextWeek && meetingDate < weekAfter;
+            default:
+              return true;
+          }
+        });
+      }
+
+      if (filters.location.trim()) {
+        const locationQuery = filters.location.toLowerCase();
+        filtered = filtered.filter(group => 
+          (group.meetingLocation && group.meetingLocation.toLowerCase().includes(locationQuery)) ||
+          (group.meetingRoom && group.meetingRoom.toLowerCase().includes(locationQuery))
+        );
+      }
+    }
+
+    // Apply sorting
+    filtered.sort((a, b) => {
+      switch (sortBy) {
+        case 'newest':
+          return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
+        case 'oldest':
+          return new Date(a.createdAt || 0) - new Date(b.createdAt || 0);
+        case 'name':
+          return a.name.localeCompare(b.name);
+        case 'name-desc':
+          return b.name.localeCompare(a.name);
+        case 'capacity':
+          return (a.capacity || 0) - (b.capacity || 0);
+        case 'capacity-desc':
+          return (b.capacity || 0) - (a.capacity || 0);
+        case 'date':
+          if (!a.meetingDate && !b.meetingDate) return 0;
+          if (!a.meetingDate) return 1;
+          if (!b.meetingDate) return -1;
+          return new Date(a.meetingDate) - new Date(b.meetingDate);
+        case 'popularity':
+          const aMembers = a.members ? a.members.length : 0;
+          const bMembers = b.members ? b.members.length : 0;
+          return bMembers - aMembers;
+        default:
+          return 0;
+      }
+    });
+
+    setFilteredGroups(filtered);
+  }, [groups, searchQuery, filters, sortBy, showPastGroups]);
+
+  // Filter handlers
+  const handleSearchChange = (query) => {
+    setSearchQuery(query);
+  };
+
+  const handleFiltersChange = (filterType, value) => {
+    setFilters(prev => ({
+      ...prev,
+      [filterType]: value
+    }));
+  };
+
+  const handleSortChange = (sortValue) => {
+    setSortBy(sortValue);
+  };
+
+  const handleClearFilters = () => {
+    setFilters({
+      meetingType: 'all',
+      mode: 'all',
+      privacy: 'all',
+      capacity: 'all',
+      timeRange: 'all',
+      location: ''
+    });
+    setSearchQuery('');
+  };
 
   // Debug logging
   console.log('Current state:', { user, showAuth, authMode });
@@ -351,17 +807,16 @@ function App() {
         />
       )}
       <header className="App-header">
-        <h1>Study Groups App</h1>
-        {user ? (
-          <div className="user-info">
-            <span>Welcome, {user.name}!</span>
-            <button onClick={handleLogout} className="logout-btn">Logout</button>
-          </div>
-        ) : (
-          <button onClick={() => setShowAuth(true)} className="login-btn">Login / Register</button>
-        )}
+        <div className="header-top">
+          <h1 className="app-title"><span className="capital-j">J</span>oin<span className="capital-u">U</span>p</h1>
+          {!user && (
+            <div className="header-actions">
+              <button onClick={() => setShowAuth(true)} className="login-btn">Login / Register</button>
+            </div>
+          )}
+        </div>
         {user && (
-          <nav>
+          <nav className="main-nav">
             <button 
               onClick={() => setActiveTab('my-groups')} 
               className={activeTab === 'my-groups' ? 'active' : ''}
@@ -380,16 +835,45 @@ function App() {
             >
               Favorites
             </button>
-
             <button 
               onClick={() => setActiveTab('create')} 
               className={activeTab === 'create' ? 'active' : ''}
             >
               Create Group
             </button>
+
           </nav>
         )}
       </header>
+
+
+
+      {/* Search and Filter Bar */}
+      {user && activeTab !== 'create' && (
+        <SearchFilterBar
+          searchQuery={searchQuery}
+          onSearchChange={handleSearchChange}
+          filters={filters}
+          onFiltersChange={handleFiltersChange}
+          sortBy={sortBy}
+          onSortChange={handleSortChange}
+          onClearFilters={handleClearFilters}
+          totalGroups={groups.length}
+          filteredCount={(() => {
+            // Return the count based on the active tab
+            switch (activeTab) {
+              case 'my-groups':
+                return filteredGroups.filter(group => group.userStatus?.isMember || group.userStatus?.isOwner).length;
+              case 'available':
+                return filteredGroups.filter(group => !group.userStatus?.isMember && !group.userStatus?.isOwner).length;
+              case 'favorites':
+                return filteredGroups.filter(group => group.userStatus?.isFavorited).length;
+              default:
+                return filteredGroups.length;
+            }
+          })()}
+        />
+      )}
       <main>
         {showAuth ? (
           <AuthForm mode={authMode} onLogin={handleLogin} onRegister={handleRegister} onSwitchMode={setAuthMode} onClose={() => setShowAuth(false)} error={error} />
@@ -410,38 +894,51 @@ function App() {
               <>
                 {activeTab === 'my-groups' && (
               <div className="groups-section">
-                <h2>My Groups</h2>
                 {(() => {
-                  const myGroups = groups.filter(group => group.userStatus?.isMember || group.userStatus?.isOwner);
+                  const myGroups = filteredGroups.filter(group => group.userStatus?.isMember || group.userStatus?.isOwner);
                   console.log('My Groups filter:', {
                     totalGroups: groups.length,
+                    filteredGroups: filteredGroups.length,
                     myGroupsCount: myGroups.length,
                     groups: groups.map(g => ({ name: g.name, isMember: g.userStatus?.isMember, isOwner: g.userStatus?.isOwner }))
                   });
                   return (
                     <>
-                      <p className="list-count">Found {myGroups.length} groups for you!</p>
-                      <div className="groups-list">
-                        {myGroups.map(group => (
-                          <GroupCard 
-                            key={group._id} 
-                            group={group} 
-                            user={user} 
-                            onJoinGroup={joinGroup} 
-                            onApproveRequest={approveRequest}
-                            onDenyRequest={denyRequest}
-                            onLeaveGroup={leaveGroup}
-                            onUpdateGroup={updateGroup}
-                            onDeleteGroup={deleteGroup}
-                            setEditingGroup={setEditingGroup}
-                            onToggleFavorite={toggleFavorite}
-                            onShowDetails={(group) => {
-                              setSelectedGroup(group);
-                              setShowDetailsModal(true);
-                            }}
-                          />
-                        ))}
-                      </div>
+                      {myGroups.length > 0 ? (
+                        <>
+                          <div className="groups-list">
+                            {myGroups.map(group => (
+                              <GroupCard 
+                                key={group._id} 
+                                group={group} 
+                                user={user} 
+                                onJoinGroup={joinGroup} 
+                                onApproveRequest={approveRequest}
+                                onDenyRequest={denyRequest}
+                                onLeaveGroup={leaveGroup}
+                                onUpdateGroup={updateGroup}
+                                onDeleteGroup={deleteGroup}
+                                setEditingGroup={setEditingGroup}
+                                onToggleFavorite={toggleFavorite}
+                                onShowDetails={(group) => {
+                                  setSelectedGroup(group);
+                                  setShowDetailsModal(true);
+                                }}
+                              />
+                            ))}
+                          </div>
+                        </>
+                      ) : (
+                        <div className="no-results">
+                          <h3>No groups found</h3>
+                          <p>{showPastGroups ? "You haven't participated in any past groups." : "Try adjusting your search or filters to find more groups."}</p>
+                          {!showPastGroups && (
+                            <button onClick={handleClearFilters} className="clear-filters-btn">
+                              Clear All Filters
+                            </button>
+                          )}
+                        </div>
+                      )}
                     </>
                   );
                 })()}
@@ -450,32 +947,45 @@ function App() {
             
             {activeTab === 'available' && (
               <div className="groups-section">
-                <h2>Available Groups</h2>
                 {(() => {
-                  const availableGroups = groups.filter(group => !group.userStatus?.isMember && !group.userStatus?.isOwner);
+                  const availableGroups = filteredGroups.filter(group => !group.userStatus?.isMember && !group.userStatus?.isOwner);
                   console.log('Available Groups filter:', {
                     totalGroups: groups.length,
+                    filteredGroups: filteredGroups.length,
                     availableGroupsCount: availableGroups.length,
                     groups: groups.map(g => ({ name: g.name, isMember: g.userStatus?.isMember, isOwner: g.userStatus?.isOwner }))
                   });
                   return (
                     <>
-                      <p className="list-count">Found {availableGroups.length} available groups!</p>
-                      <div className="groups-list">
-                        {availableGroups.map(group => (
-                          <GroupSummary 
-                            key={group._id} 
-                            group={group} 
-                            user={user} 
-                            onJoinGroup={joinGroup} 
-                            onToggleFavorite={toggleFavorite}
-                            onShowDetails={(group) => {
-                              setSelectedGroup(group);
-                              setShowDetailsModal(true);
-                            }}
-                          />
-                        ))}
-                      </div>
+                      {availableGroups.length > 0 ? (
+                        <>
+                          <div className="groups-list">
+                            {availableGroups.map(group => (
+                              <GroupSummary 
+                                key={group._id} 
+                                group={group} 
+                                user={user} 
+                                onJoinGroup={joinGroup} 
+                                onToggleFavorite={toggleFavorite}
+                                onShowDetails={(group) => {
+                                  setSelectedGroup(group);
+                                  setShowDetailsModal(true);
+                                }}
+                              />
+                            ))}
+                          </div>
+                        </>
+                      ) : (
+                        <div className="no-results">
+                          <h3>No available groups found</h3>
+                          <p>{showPastGroups ? "No past groups available to view." : "Try adjusting your search or filters to find more groups."}</p>
+                          {!showPastGroups && (
+                            <button onClick={handleClearFilters} className="clear-filters-btn">
+                              Clear All Filters
+                            </button>
+                          )}
+                        </div>
+                      )}
                     </>
                   );
                 })()}
@@ -484,38 +994,49 @@ function App() {
             
             {activeTab === 'favorites' && (
               <div className="groups-section">
-                <h2>Favorite Groups</h2>
                 {(() => {
-                  const favoriteGroups = groups.filter(group => group.userStatus?.isFavorited);
+                  const favoriteGroups = filteredGroups.filter(group => group.userStatus?.isFavorited);
                   console.log('Favorites filter:', {
                     totalGroups: groups.length,
+                    filteredGroups: filteredGroups.length,
                     favoriteGroupsCount: favoriteGroups.length,
                     groups: groups.map(g => ({ name: g.name, isFavorited: g.userStatus?.isFavorited }))
                   });
                   return (
                     <>
-                      <p className="list-count">Found {favoriteGroups.length} favorite groups!</p>
-                      <div className="groups-list">
-                        {favoriteGroups.map(group => (
-                          <GroupCard 
-                            key={group._id} 
-                            group={group} 
-                            user={user} 
-                            onJoinGroup={joinGroup} 
-                            onApproveRequest={approveRequest}
-                            onDenyRequest={denyRequest}
-                            onLeaveGroup={leaveGroup}
-                            onUpdateGroup={updateGroup}
-                            onDeleteGroup={deleteGroup}
-                            setEditingGroup={setEditingGroup}
-                            onToggleFavorite={toggleFavorite}
-                            onShowDetails={(group) => {
-                              setSelectedGroup(group);
-                              setShowDetailsModal(true);
-                            }}
-                          />
-                        ))}
-                      </div>
+                      {favoriteGroups.length > 0 ? (
+                        <>
+                          <div className="groups-list">
+                            {favoriteGroups.map(group => (
+                              <GroupCard 
+                                key={group._id} 
+                                group={group} 
+                                user={user} 
+                                onJoinGroup={joinGroup} 
+                                onApproveRequest={approveRequest}
+                                onDenyRequest={denyRequest}
+                                onLeaveGroup={leaveGroup}
+                                onUpdateGroup={updateGroup}
+                                onDeleteGroup={deleteGroup}
+                                setEditingGroup={setEditingGroup}
+                                onToggleFavorite={toggleFavorite}
+                                onShowDetails={(group) => {
+                                  setSelectedGroup(group);
+                                  setShowDetailsModal(true);
+                                }}
+                              />
+                            ))}
+                          </div>
+                        </>
+                      ) : (
+                        <div className="no-results">
+                          <h3>No favorite groups found</h3>
+                          <p>Start favoriting groups to see them here!</p>
+                          <button onClick={() => setActiveTab('available')} className="clear-filters-btn">
+                            Browse Groups
+                          </button>
+                        </div>
+                      )}
                     </>
                   );
                 })()}
@@ -528,13 +1049,189 @@ function App() {
             
 
               </>
-            )}
+                        )}
+            
+
           </>
         )}
       </main>
-    </div>
-  );
-}
+        
+        {/* Footer */}
+        <footer className="app-footer">
+          <div className="footer-content">
+            <div className="footer-section">
+              <h3>JoinUp</h3>
+              <p>Connect with fellow students, join study groups, and achieve your academic goals together. Building communities, one group at a time.</p>
+            </div>
+            
+            <div className="footer-section">
+              <h4>Quick Links</h4>
+              <ul>
+                <li><button onClick={() => setActiveTab('available')}>Find Groups</button></li>
+                <li><button onClick={() => setActiveTab('create')}>Create Group</button></li>
+                <li><button onClick={() => setActiveTab('my-groups')}>My Groups</button></li>
+                <li><button onClick={() => setActiveTab('favorites')}>Favorites</button></li>
+              </ul>
+            </div>
+            
+            <div className="footer-section">
+              <h4>Contact</h4>
+              <ul>
+                <li>📧 support@joinup.edu</li>
+                <li>📱 (603) 646-0000</li>
+                <li>📍 Dartmouth College</li>
+                <li>🕒 Mon-Fri 9AM-5PM</li>
+              </ul>
+            </div>
+            
+            <div className="footer-section">
+              <h4>Follow Us</h4>
+              <div className="social-links">
+                <a href="#" className="social-link">📘</a>
+                <a href="#" className="social-link">📷</a>
+                <a href="#" className="social-link">🐦</a>
+                <a href="#" className="social-link">💼</a>
+              </div>
+            </div>
+          </div>
+          
+          <div className="footer-bottom">
+            <div className="footer-bottom-content">
+              <p>&copy; 2024 JoinUp. All rights reserved.</p>
+              <div className="footer-legal">
+                <a href="#">Privacy Policy</a>
+                <a href="#">Terms of Service</a>
+                <a href="#">Cookie Policy</a>
+              </div>
+            </div>
+          </div>
+        </footer>
+        
+        {/* Corner Menu */}
+        {user && (
+          <div className="corner-menu">
+            <div className="user-info-corner">
+              <span className="welcome-text">Welcome, {user.name}!</span>
+            </div>
+            <div className="menu-container">
+              <button 
+                className="corner-menu-btn"
+                onClick={() => setShowCornerMenu(!showCornerMenu)}
+                title="Menu"
+              >
+                <span className="menu-icon">☰</span>
+              </button>
+              
+              {showCornerMenu && (
+                <div className="corner-menu-dropdown">
+                  {(() => {
+                    const userPastGroups = groups.filter(group => {
+                      if (group.meetingDate && group.meetingTime) {
+                        const meetingDateTime = new Date(`${group.meetingDate}T${group.meetingTime}`);
+                        const now = new Date();
+                        const thirtyDaysAgo = new Date(now.getTime() - (30 * 24 * 60 * 60 * 1000));
+                        return meetingDateTime < now && 
+                               meetingDateTime > thirtyDaysAgo &&
+                               (group.userStatus?.isMember || group.userStatus?.isOwner);
+                      }
+                      return false;
+                    });
+                    
+                    if (userPastGroups.length > 0) {
+                      return (
+                        <button 
+                          className="menu-item"
+                          onClick={() => {
+                            setShowPastGroupsModal(true);
+                            setShowCornerMenu(false);
+                          }}
+                        >
+                          <span className="menu-item-icon">📅</span>
+                          Past Groups
+                        </button>
+                      );
+                    }
+                    return null;
+                  })()}
+                  <button 
+                    className="menu-item logout-item"
+                    onClick={() => {
+                      handleLogout();
+                      setShowCornerMenu(false);
+                    }}
+                  >
+                    <span className="menu-item-icon">🚪</span>
+                    Logout
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+        
+        {/* Past Groups Modal */}
+        {showPastGroupsModal && (
+          <div className="past-groups-modal-overlay" onClick={() => setShowPastGroupsModal(false)}>
+            <div className="past-groups-modal" onClick={(e) => e.stopPropagation()}>
+              <div className="past-groups-modal-header">
+                <h3>Past Groups</h3>
+                <button 
+                  className="past-groups-modal-close"
+                  onClick={() => setShowPastGroupsModal(false)}
+                >
+                  ×
+                </button>
+              </div>
+              <div className="past-groups-modal-content">
+                {(() => {
+                  const userPastGroups = groups.filter(group => {
+                    if (group.meetingDate && group.meetingTime) {
+                      const meetingDateTime = new Date(`${group.meetingDate}T${group.meetingTime}`);
+                      const now = new Date();
+                      const thirtyDaysAgo = new Date(now.getTime() - (30 * 24 * 60 * 60 * 1000));
+                      return meetingDateTime < now && 
+                             meetingDateTime > thirtyDaysAgo &&
+                             (group.userStatus?.isMember || group.userStatus?.isOwner);
+                    }
+                    return false;
+                  });
+                  
+                  return userPastGroups.length > 0 ? (
+                    <div className="groups-list">
+                      {userPastGroups.map(group => (
+                        <GroupCard
+                          key={group._id}
+                          group={{ ...group, isArchived: true }}
+                          user={user}
+                          onJoinGroup={() => {}} // Disabled for archived groups
+                          onApproveRequest={() => {}}
+                          onDenyRequest={() => {}}
+                          onLeaveGroup={() => {}}
+                          onUpdateGroup={() => {}}
+                          onDeleteGroup={() => {}}
+                          setEditingGroup={() => {}}
+                          onToggleFavorite={toggleFavorite}
+                          onShowDetails={(group) => {
+                            setSelectedGroup(group);
+                            setShowDetailsModal(true);
+                          }}
+                        />
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="no-results">
+                      <h3>No past groups</h3>
+                      <p>You haven't participated in any groups that have ended recently.</p>
+                    </div>
+                  );
+                })()}
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
 
 // Authentication Form Component
 function AuthForm({ mode, onLogin, onRegister, onSwitchMode, onClose, error }) {
@@ -943,7 +1640,7 @@ function GroupCard({ group, user, onJoinGroup, onApproveRequest, onDenyRequest, 
   });
 
   return (
-    <div className="group-card">
+    <div className={`group-card ${group.isArchived ? 'archived' : ''}`}>
       <div className="group-card-header">
         <h3>{group.name}</h3>
         <div className="card-actions">

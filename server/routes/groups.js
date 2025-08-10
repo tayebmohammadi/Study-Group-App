@@ -39,6 +39,15 @@ router.post('/', async (req, res) => {
       meetingDuration: req.body.meetingDuration || 60
     });
 
+    // Ensure the owner is also added to members if not already there
+    if (req.body.ownerId && !group.members.some(member => member.userId.toString() === req.body.ownerId)) {
+      group.members.push({
+        userId: req.body.ownerId,
+        name: req.body.ownerName,
+        email: req.body.ownerEmail
+      });
+    }
+
     // Save the group
     const savedGroup = await group.save();
     console.log('Group created with ID:', savedGroup._id);
@@ -391,10 +400,10 @@ router.get('/user/:userId', async (req, res) => {
     const groups = await Group.find({});
     
     const groupsWithStatus = groups.map(group => {
-      const isMember = group.members.some(member => member.userId.toString() === userId);
+      const isMember = group.members.some(member => member.userId && member.userId.toString() === userId);
       const isOwner = group.owner ? group.owner.toString() === userId : false;
-      const hasRequested = group.pendingMembers.some(pending => pending.userId.toString() === userId);
-      const isWaitlisted = group.waitlist.some(waitlist => waitlist.userId.toString() === userId);
+      const hasRequested = group.pendingMembers.some(pending => pending.userId && pending.userId.toString() === userId);
+      const isWaitlisted = group.waitlist.some(waitlist => waitlist.userId && waitlist.userId.toString() === userId);
       const isFavorited = group.favorites.includes(userId);
 
       const userStatus = { isMember, isOwner, hasRequested, isWaitlisted, isFavorited };
