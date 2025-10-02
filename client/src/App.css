@@ -421,66 +421,131 @@ main {
 }
 
 .owner-controls {
-  margin-top: 15px;
-  padding-top: 15px;
-  border-top: 1px solid #eee;
+  margin-top: 20px;
+  padding: 20px;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border-radius: 12px;
+  border: 1px solid #dee2e6;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .owner-controls h4 {
-  color: #282c34;
-  margin-bottom: 10px;
-  font-size: 1rem;
+  color: #2c3e50;
+  margin-bottom: 15px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.owner-controls h4::before {
+  content: "📋";
+  font-size: 1.2rem;
 }
 
 .pending-request {
-  background-color: #f8f9fa;
+  background: white;
   border: 1px solid #e9ecef;
-  border-radius: 4px;
-  padding: 10px;
-  margin-bottom: 8px;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 12px;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.pending-request::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  background: linear-gradient(135deg, #ffc107, #ff8c00);
+}
+
+.pending-request:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border-color: #007bff;
 }
 
 .pending-request span {
   color: #495057;
-  font-size: 0.9rem;
+  font-size: 0.95rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pending-request span::before {
+  content: "👤";
+  font-size: 1.1rem;
 }
 
 .request-actions {
   display: flex;
-  gap: 5px;
+  gap: 8px;
 }
 
 .approve-btn {
-  background-color: #28a745;
+  background: linear-gradient(135deg, #28a745, #20c997);
   color: white;
   border: none;
-  padding: 4px 8px;
-  border-radius: 3px;
+  padding: 8px 16px;
+  border-radius: 6px;
   cursor: pointer;
-  font-size: 0.8rem;
-  transition: background-color 0.3s;
+  font-size: 0.85rem;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(40, 167, 69, 0.3);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.approve-btn::before {
+  content: "✓";
+  font-weight: bold;
 }
 
 .approve-btn:hover {
-  background-color: #218838;
+  background: linear-gradient(135deg, #218838, #1ea085);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(40, 167, 69, 0.4);
 }
 
 .deny-btn {
-  background-color: #dc3545;
+  background: linear-gradient(135deg, #dc3545, #e74c3c);
   color: white;
   border: none;
-  padding: 4px 8px;
-  border-radius: 3px;
+  padding: 8px 16px;
+  border-radius: 6px;
   cursor: pointer;
-  font-size: 0.8rem;
-  transition: background-color 0.3s;
+  font-size: 0.85rem;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(220, 53, 69, 0.3);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.deny-btn::before {
+  content: "✕";
+  font-weight: bold;
 }
 
 .deny-btn:hover {
-  background-color: #c82333;
+  background: linear-gradient(135deg, #c82333, #d63031);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(220, 53, 69, 0.4);
 }
 
 .create-group {
@@ -598,19 +663,93 @@ main {
 }
 
 .waitlist-item {
-  background: #fff3cd;
+  background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
   border: 1px solid #ffeaa7;
-  padding: 8px;
-  margin: 5px 0;
-  border-radius: 4px;
+  padding: 12px 16px;
+  margin: 8px 0;
+  border-radius: 8px;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  box-shadow: 0 2px 4px rgba(255, 193, 7, 0.2);
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.waitlist-item::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  background: linear-gradient(135deg, #ffc107, #ff8c00);
+}
+
+.waitlist-item:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(255, 193, 7, 0.3);
+}
+
+.waitlist-item span:first-child {
+  color: #856404;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.waitlist-item span:first-child::before {
+  content: "⏳";
+  font-size: 1.1rem;
 }
 
 .waitlist-date {
   color: #6c757d;
   font-size: 0.8rem;
+  font-style: italic;
+}
+
+/* Empty state for owner controls */
+.owner-controls .empty-state {
+  text-align: center;
+  padding: 20px;
+  color: #6c757d;
+  font-style: italic;
+  background: white;
+  border-radius: 8px;
+  border: 2px dashed #dee2e6;
+}
+
+.owner-controls .empty-state::before {
+  content: "✨";
+  display: block;
+  font-size: 2rem;
+  margin-bottom: 8px;
+}
+
+/* Responsive design for owner controls */
+@media (max-width: 768px) {
+  .owner-controls {
+    padding: 15px;
+    margin-top: 15px;
+  }
+  
+  .pending-request {
+    flex-direction: column;
+    gap: 12px;
+    align-items: stretch;
+  }
+  
+  .request-actions {
+    justify-content: center;
+  }
+  
+  .approve-btn, .deny-btn {
+    flex: 1;
+    justify-content: center;
+  }
 }
 
 .edit-btn {
@@ -779,6 +918,42 @@ main {
 
 .meeting-link:hover {
   text-decoration: underline;
+}
+
+.meeting-location {
+  margin: 8px 0 4px 0;
+  font-size: 0.9rem;
+  color: #495057;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.meeting-url {
+  margin: 4px 0 0 0;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.meeting-url .meeting-link {
+  background: linear-gradient(135deg, #007bff, #0056b3);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  text-decoration: none;
+  font-size: 0.85rem;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(0, 123, 255, 0.3);
+}
+
+.meeting-url .meeting-link:hover {
+  background: linear-gradient(135deg, #0056b3, #004085);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 123, 255, 0.4);
+  text-decoration: none;
 }
 
 .meeting-info-basic {
@@ -1490,16 +1665,16 @@ main {
   color: #2c3e50;
 }
 
-/* Form validation styles */
-.create-group input:invalid,
-.create-group textarea:invalid,
-.create-group select:invalid {
+/* Form validation styles - only apply after validation attempt */
+.create-group input.validation-error,
+.create-group textarea.validation-error,
+.create-group select.validation-error {
   border-color: #e74c3c;
 }
 
-.create-group input:focus:invalid,
-.create-group textarea:focus:invalid,
-.create-group select:focus:invalid {
+.create-group input.validation-error:focus,
+.create-group textarea.validation-error:focus,
+.create-group select.validation-error:focus {
   box-shadow: 0 0 0 2px rgba(231, 76, 60, 0.2);
 }
 

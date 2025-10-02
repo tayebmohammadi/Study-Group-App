@@ -418,8 +418,20 @@ function App() {
         meetingDuration: groupData.meetingDuration
       });
       
-      // Use the updated group data
-      setGroups([updateResponse.data, ...groups]);
+      // Add userStatus to the created group since it won't have it from the server response
+      const groupWithStatus = {
+        ...updateResponse.data,
+        userStatus: {
+          isMember: true,
+          isOwner: true,
+          hasRequested: false,
+          isWaitlisted: false,
+          isFavorited: false
+        }
+      };
+      
+      // Use the updated group data with userStatus
+      setGroups([groupWithStatus, ...groups]);
       setActiveTab('list');
       showNotification('Group created successfully!');
     } catch (error) {
@@ -1361,66 +1373,72 @@ function CreateGroupForm({ onSubmit, showNotification }) {
     meetingDuration: 60
   });
 
+  const [validationErrors, setValidationErrors] = useState({});
+  const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false);
+
+  // Helper function to get validation class
+  const getValidationClass = (fieldName) => {
+    return validationErrors[fieldName] ? 'validation-error' : '';
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
+    setHasAttemptedSubmit(true);
+    
+    const errors = {};
     
     // Comprehensive validation - ALL fields must be filled
     if (!formData.name.trim()) {
-      showNotification('Please enter a group name');
-      return;
+      errors.name = 'Please enter a group name';
     }
     if (!formData.topic.trim()) {
-      showNotification('Please enter a topic');
-      return;
+      errors.topic = 'Please enter a topic';
     }
     if (!formData.description.trim()) {
-      showNotification('Please enter a description');
-      return;
+      errors.description = 'Please enter a description';
     }
     if (!formData.capacity || formData.capacity < 2) {
-      showNotification('Please enter a valid capacity (minimum 2)');
-      return;
+      errors.capacity = 'Please enter a valid capacity (minimum 2)';
     }
     if (!formData.meetingType) {
-      showNotification('Please select a meeting type');
-      return;
+      errors.meetingType = 'Please select a meeting type';
     }
     if (!formData.meetingDate) {
-      showNotification('Please select a meeting date');
-      return;
+      errors.meetingDate = 'Please select a meeting date';
     }
     if (!formData.meetingTime) {
-      showNotification('Please select a meeting time');
-      return;
+      errors.meetingTime = 'Please select a meeting time';
     }
     if (!formData.meetingDuration || formData.meetingDuration < 15) {
-      showNotification('Please enter a valid meeting duration (minimum 15 minutes)');
-      return;
+      errors.meetingDuration = 'Please enter a valid meeting duration (minimum 15 minutes)';
     }
     
     // Validate in-person meeting fields
     if (formData.meetingType === 'in-person') {
       if (!formData.meetingLocation.trim()) {
-        showNotification('Please enter a meeting location');
-        return;
+        errors.meetingLocation = 'Please enter a meeting location';
       }
       if (!formData.meetingRoom.trim()) {
-        showNotification('Please enter a room number');
-        return;
+        errors.meetingRoom = 'Please enter a room number';
       }
     }
     
     // Validate online/hybrid meeting fields
     if (formData.meetingType === 'online' || formData.meetingType === 'hybrid') {
       if (!formData.meetingUrl.trim()) {
-        showNotification('Please enter a meeting URL');
-        return;
+        errors.meetingUrl = 'Please enter a meeting URL';
+      } else if (!formData.meetingUrl.startsWith('http://') && !formData.meetingUrl.startsWith('https://')) {
+        errors.meetingUrl = 'Please enter a valid meeting URL (must start with http:// or https://)';
       }
-      // Basic URL validation
-      if (!formData.meetingUrl.startsWith('http://') && !formData.meetingUrl.startsWith('https://')) {
-        showNotification('Please enter a valid meeting URL (must start with http:// or https://)');
-        return;
-      }
+    }
+    
+    setValidationErrors(errors);
+    
+    // If there are errors, show the first one and return
+    if (Object.keys(errors).length > 0) {
+      const firstError = Object.values(errors)[0];
+      showNotification(firstError);
+      return;
     }
     
     // If we get here, all validation passed
@@ -1440,6 +1458,8 @@ function CreateGroupForm({ onSubmit, showNotification }) {
       meetingUrl: '',
       meetingDuration: 60
     });
+    setValidationErrors({});
+    setHasAttemptedSubmit(false);
   };
 
   const handleChange = (e) => {
@@ -1447,6 +1467,14 @@ function CreateGroupForm({ onSubmit, showNotification }) {
       ...formData,
       [e.target.name]: e.target.value
     });
+    
+    // Clear validation error for this field when user starts typing
+    if (validationErrors[e.target.name]) {
+      setValidationErrors({
+        ...validationErrors,
+        [e.target.name]: ''
+      });
+    }
   };
 
   return (
@@ -1460,6 +1488,7 @@ function CreateGroupForm({ onSubmit, showNotification }) {
             name="name"
             value={formData.name}
             onChange={handleChange}
+            className={getValidationClass('name')}
             required
           />
         </div>
@@ -1470,6 +1499,7 @@ function CreateGroupForm({ onSubmit, showNotification }) {
             name="topic"
             value={formData.topic}
             onChange={handleChange}
+            className={getValidationClass('topic')}
             required
           />
         </div>
@@ -1479,6 +1509,7 @@ function CreateGroupForm({ onSubmit, showNotification }) {
             name="description"
             value={formData.description}
             onChange={handleChange}
+            className={getValidationClass('description')}
             required
           />
         </div>
@@ -1489,6 +1520,7 @@ function CreateGroupForm({ onSubmit, showNotification }) {
             name="capacity"
             value={formData.capacity}
             onChange={handleChange}
+            className={getValidationClass('capacity')}
             min="2"
             max="100"
             required
@@ -1496,14 +1528,14 @@ function CreateGroupForm({ onSubmit, showNotification }) {
         </div>
         <div>
           <label>Mode:</label>
-          <select name="mode" value={formData.mode} onChange={handleChange} required>
+          <select name="mode" value={formData.mode} onChange={handleChange} className={getValidationClass('mode')} required>
             <option value="collaborative">Collaborative</option>
             <option value="quiet">Quiet Study</option>
           </select>
         </div>
         <div>
           <label>Privacy:</label>
-          <select name="privacy" value={formData.privacy} onChange={handleChange} required>
+          <select name="privacy" value={formData.privacy} onChange={handleChange} className={getValidationClass('privacy')} required>
             <option value="public">Public - Anyone can join</option>
             <option value="private">Private - Approval required</option>
           </select>
@@ -1511,7 +1543,7 @@ function CreateGroupForm({ onSubmit, showNotification }) {
         
         <div>
           <label>Meeting Type:</label>
-          <select name="meetingType" value={formData.meetingType} onChange={handleChange} required>
+          <select name="meetingType" value={formData.meetingType} onChange={handleChange} className={getValidationClass('meetingType')} required>
             <option value="in-person">In-Person</option>
             <option value="online">Online (Zoom/Teams)</option>
             <option value="hybrid">Hybrid</option>
@@ -1542,6 +1574,7 @@ function CreateGroupForm({ onSubmit, showNotification }) {
             name="meetingDuration"
             value={formData.meetingDuration}
             onChange={handleChange}
+            className={getValidationClass('meetingDuration')}
             min="15"
             max="240"
             required
@@ -1557,6 +1590,7 @@ function CreateGroupForm({ onSubmit, showNotification }) {
                 name="meetingLocation"
                 value={formData.meetingLocation}
                 onChange={handleChange}
+                className={getValidationClass('meetingLocation')}
                 placeholder="e.g., Baker Library, Dartmouth College"
                 required
               />
@@ -1572,6 +1606,7 @@ function CreateGroupForm({ onSubmit, showNotification }) {
                 name="meetingRoom"
                 value={formData.meetingRoom}
                 onChange={handleChange}
+                className={getValidationClass('meetingRoom')}
                 placeholder="e.g., Room 101, Study Room A"
                 required
               />
@@ -1587,6 +1622,7 @@ function CreateGroupForm({ onSubmit, showNotification }) {
               name="meetingUrl"
               value={formData.meetingUrl}
               onChange={handleChange}
+              className={getValidationClass('meetingUrl')}
               placeholder="https://zoom.us/j/123456789"
               required
             />
@@ -1718,6 +1754,22 @@ function GroupCard({ group, user, onJoinGroup, onApproveRequest, onDenyRequest, 
                 <>
                   <p className="meeting-time">{dayName}, {monthName} {day} {displayTime}</p>
                   <p className="meeting-attendance">{attendanceText ? `${attendanceText}, ` : ''}{meetingTypeDisplay}</p>
+                  
+                  {/* Show location for in-person and hybrid meetings */}
+                  {(group.meetingType === 'in-person' || group.meetingType === 'hybrid') && group.meetingLocation && (
+                    <p className="meeting-location">
+                      📍 {group.meetingLocation}{group.meetingRoom ? `, ${group.meetingRoom}` : ''}
+                    </p>
+                  )}
+                  
+                  {/* Show meeting URL for online and hybrid meetings */}
+                  {(group.meetingType === 'online' || group.meetingType === 'hybrid') && group.meetingUrl && (
+                    <p className="meeting-url">
+                      🔗 <a href={group.meetingUrl} target="_blank" rel="noopener noreferrer" className="meeting-link">
+                        Join Online Meeting
+                      </a>
+                    </p>
+                  )}
                 </>
               );
             })()}
@@ -1827,6 +1879,22 @@ function GroupSummary({ group, user, onJoinGroup, onToggleFavorite, onShowDetail
                 <>
                   <p className="meeting-time">{dayName}, {monthName} {day} {displayTime}</p>
                   <p className="meeting-attendance">{attendanceText ? `${attendanceText}, ` : ''}{meetingTypeDisplay}</p>
+                  
+                  {/* Show location for in-person and hybrid meetings */}
+                  {(group.meetingType === 'in-person' || group.meetingType === 'hybrid') && group.meetingLocation && (
+                    <p className="meeting-location">
+                      📍 {group.meetingLocation}{group.meetingRoom ? `, ${group.meetingRoom}` : ''}
+                    </p>
+                  )}
+                  
+                  {/* Show meeting URL for online and hybrid meetings */}
+                  {(group.meetingType === 'online' || group.meetingType === 'hybrid') && group.meetingUrl && (
+                    <p className="meeting-url">
+                      🔗 <a href={group.meetingUrl} target="_blank" rel="noopener noreferrer" className="meeting-link">
+                        Join Online Meeting
+                      </a>
+                    </p>
+                  )}
                 </>
               );
             })()}
@@ -1884,6 +1952,14 @@ function EditGroupForm({ group, onSubmit, onClose, showNotification }) {
     return `${hours.toString().padStart(2, '0')}:${roundedMinutes.toString().padStart(2, '0')}`;
   };
 
+  const [validationErrors, setValidationErrors] = useState({});
+  const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false);
+
+  // Helper function to get validation class
+  const getValidationClass = (fieldName) => {
+    return validationErrors[fieldName] ? 'validation-error' : '';
+  };
+
   const [formData, setFormData] = useState({
     name: group.name,
     description: group.description,
@@ -1902,64 +1978,62 @@ function EditGroupForm({ group, onSubmit, onClose, showNotification }) {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    setHasAttemptedSubmit(true);
+    
+    const errors = {};
     
     // Comprehensive validation - ALL fields must be filled
     if (!formData.name.trim()) {
-      showNotification('Please enter a group name');
-      return;
+      errors.name = 'Please enter a group name';
     }
     if (!formData.topic.trim()) {
-      showNotification('Please enter a topic');
-      return;
+      errors.topic = 'Please enter a topic';
     }
     if (!formData.description.trim()) {
-      showNotification('Please enter a description');
-      return;
+      errors.description = 'Please enter a description';
     }
     if (!formData.capacity || formData.capacity < 2) {
-      showNotification('Please enter a valid capacity (minimum 2)');
-      return;
+      errors.capacity = 'Please enter a valid capacity (minimum 2)';
     }
     if (!formData.meetingType) {
-      showNotification('Please select a meeting type');
-      return;
+      errors.meetingType = 'Please select a meeting type';
     }
     if (!formData.meetingDate) {
-      showNotification('Please select a meeting date');
-      return;
+      errors.meetingDate = 'Please select a meeting date';
     }
     if (!formData.meetingTime) {
-      showNotification('Please select a meeting time');
-      return;
+      errors.meetingTime = 'Please select a meeting time';
     }
     if (!formData.meetingDuration || formData.meetingDuration < 15) {
-      showNotification('Please enter a valid meeting duration (minimum 15 minutes)');
-      return;
+      errors.meetingDuration = 'Please enter a valid meeting duration (minimum 15 minutes)';
     }
     
     // Validate in-person meeting fields
     if (formData.meetingType === 'in-person') {
       if (!formData.meetingLocation.trim()) {
-        showNotification('Please enter a meeting location');
-        return;
+        errors.meetingLocation = 'Please enter a meeting location';
       }
       if (!formData.meetingRoom.trim()) {
-        showNotification('Please enter a room number');
-        return;
+        errors.meetingRoom = 'Please enter a room number';
       }
     }
     
     // Validate online/hybrid meeting fields
     if (formData.meetingType === 'online' || formData.meetingType === 'hybrid') {
       if (!formData.meetingUrl.trim()) {
-        showNotification('Please enter a meeting URL');
-        return;
+        errors.meetingUrl = 'Please enter a meeting URL';
+      } else if (!formData.meetingUrl.startsWith('http://') && !formData.meetingUrl.startsWith('https://')) {
+        errors.meetingUrl = 'Please enter a valid meeting URL (must start with http:// or https://)';
       }
-      // Basic URL validation
-      if (!formData.meetingUrl.startsWith('http://') && !formData.meetingUrl.startsWith('https://')) {
-        showNotification('Please enter a valid meeting URL (must start with http:// or https://)');
-        return;
-      }
+    }
+    
+    setValidationErrors(errors);
+    
+    // If there are errors, show the first one and return
+    if (Object.keys(errors).length > 0) {
+      const firstError = Object.values(errors)[0];
+      showNotification(firstError);
+      return;
     }
     
     // If we get here, all validation passed
@@ -1972,6 +2046,14 @@ function EditGroupForm({ group, onSubmit, onClose, showNotification }) {
       ...formData,
       [e.target.name]: e.target.value
     });
+    
+    // Clear validation error for this field when user starts typing
+    if (validationErrors[e.target.name]) {
+      setValidationErrors({
+        ...validationErrors,
+        [e.target.name]: ''
+      });
+    }
   };
 
   return (
@@ -2021,14 +2103,14 @@ function EditGroupForm({ group, onSubmit, onClose, showNotification }) {
         </div>
         <div>
           <label>Mode:</label>
-          <select name="mode" value={formData.mode} onChange={handleChange} required>
+          <select name="mode" value={formData.mode} onChange={handleChange} className={getValidationClass('mode')} required>
             <option value="collaborative">Collaborative</option>
             <option value="quiet">Quiet Study</option>
           </select>
         </div>
         <div>
           <label>Privacy:</label>
-          <select name="privacy" value={formData.privacy} onChange={handleChange} required>
+          <select name="privacy" value={formData.privacy} onChange={handleChange} className={getValidationClass('privacy')} required>
             <option value="public">Public - Anyone can join</option>
             <option value="private">Private - Approval required</option>
           </select>
@@ -2036,7 +2118,7 @@ function EditGroupForm({ group, onSubmit, onClose, showNotification }) {
         
         <div>
           <label>Meeting Type:</label>
-          <select name="meetingType" value={formData.meetingType} onChange={handleChange} required>
+          <select name="meetingType" value={formData.meetingType} onChange={handleChange} className={getValidationClass('meetingType')} required>
             <option value="in-person">In-Person</option>
             <option value="online">Online (Zoom/Teams)</option>
             <option value="hybrid">Hybrid</option>
@@ -2067,6 +2149,7 @@ function EditGroupForm({ group, onSubmit, onClose, showNotification }) {
             name="meetingDuration"
             value={formData.meetingDuration}
             onChange={handleChange}
+            className={getValidationClass('meetingDuration')}
             min="15"
             max="240"
             required
@@ -2082,6 +2165,7 @@ function EditGroupForm({ group, onSubmit, onClose, showNotification }) {
                 name="meetingLocation"
                 value={formData.meetingLocation}
                 onChange={handleChange}
+                className={getValidationClass('meetingLocation')}
                 placeholder="e.g., Baker Library, Dartmouth College"
                 required
               />
@@ -2097,6 +2181,7 @@ function EditGroupForm({ group, onSubmit, onClose, showNotification }) {
                 name="meetingRoom"
                 value={formData.meetingRoom}
                 onChange={handleChange}
+                className={getValidationClass('meetingRoom')}
                 placeholder="e.g., Room 101, Study Room A"
                 required
               />
@@ -2112,6 +2197,7 @@ function EditGroupForm({ group, onSubmit, onClose, showNotification }) {
               name="meetingUrl"
               value={formData.meetingUrl}
               onChange={handleChange}
+              className={getValidationClass('meetingUrl')}
               placeholder="https://zoom.us/j/123456789"
               required
             />
